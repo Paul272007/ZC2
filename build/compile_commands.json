@@ -1,0 +1,38 @@
+[
+{
+  "directory": "/home/paul/privat/apps/ZC2/build",
+  "command": "/usr/bin/c++  -I/home/paul/privat/apps/ZC2/include -I/home/paul/privat/apps/ZC2/build/_deps/json-src/include -isystem /home/paul/privat/apps/ZC2/external -std=gnu++17 -o CMakeFiles/zc.dir/src/core.cc.o -c /home/paul/privat/apps/ZC2/src/core.cc",
+  "file": "/home/paul/privat/apps/ZC2/src/core.cc",
+  "output": "CMakeFiles/zc.dir/src/core.cc.o"
+},
+{
+  "directory": "/home/paul/privat/apps/ZC2/build",
+  "command": "/usr/bin/c++  -I/home/paul/privat/apps/ZC2/include -I/home/paul/privat/apps/ZC2/build/_deps/json-src/include -isystem /home/paul/privat/apps/ZC2/external -std=gnu++17 -o CMakeFiles/zc.dir/src/header.cc.o -c /home/paul/privat/apps/ZC2/src/header.cc",
+  "file": "/home/paul/privat/apps/ZC2/src/header.cc",
+  "output": "CMakeFiles/zc.dir/src/header.cc.o"
+},
+{
+  "directory": "/home/paul/privat/apps/ZC2/build",
+  "command": "/usr/bin/c++  -I/home/paul/privat/apps/ZC2/include -I/home/paul/privat/apps/ZC2/build/_deps/json-src/include -isystem /home/paul/privat/apps/ZC2/external -std=gnu++17 -o CMakeFiles/zc.dir/src/lib.cc.o -c /home/paul/privat/apps/ZC2/src/lib.cc",
+  "file": "/home/paul/privat/apps/ZC2/src/lib.cc",
+  "output": "CMakeFiles/zc.dir/src/lib.cc.o"
+},
+{
+  "directory": "/home/paul/privat/apps/ZC2/build",
+  "command": "/usr/bin/c++  -I/home/paul/privat/apps/ZC2/include -I/home/paul/privat/apps/ZC2/build/_deps/json-src/include -isystem /home/paul/privat/apps/ZC2/external -std=gnu++17 -o CMakeFiles/zc.dir/src/main.cc.o -c /home/paul/privat/apps/ZC2/src/main.cc",
+  "file": "/home/paul/privat/apps/ZC2/src/main.cc",
+  "output": "CMakeFiles/zc.dir/src/main.cc.o"
+},
+{
+  "directory": "/home/paul/privat/apps/ZC2/build",
+  "command": "/usr/bin/c++  -I/home/paul/privat/apps/ZC2/include -I/home/paul/privat/apps/ZC2/build/_deps/json-src/include -isystem /home/paul/privat/apps/ZC2/external -std=gnu++17 -o CMakeFiles/zc.dir/src/run.cc.o -c /home/paul/privat/apps/ZC2/src/run.cc",
+  "file": "/home/paul/privat/apps/ZC2/src/run.cc",
+  "output": "CMakeFiles/zc.dir/src/run.cc.o"
+},
+{
+  "directory": "/home/paul/privat/apps/ZC2/build",
+  "command": "/usr/bin/c++  -I/home/paul/privat/apps/ZC2/include -I/home/paul/privat/apps/ZC2/build/_deps/json-src/include -isystem /home/paul/privat/apps/ZC2/external -std=gnu++17 -o CMakeFiles/zc.dir/src/zcerror.cc.o -c /home/paul/privat/apps/ZC2/src/zcerror.cc",
+  "file": "/home/paul/privat/apps/ZC2/src/zcerror.cc",
+  "output": "CMakeFiles/zc.dir/src/zcerror.cc.o"
+}
+]

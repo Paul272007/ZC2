@@ -1,0 +1,10 @@
+{
+  "c_compiler": "gcc",
+  "c++_compiler": "g++",
+  "include_dir": "/usr/local/include/",
+  "lib_dir": "/usr/local/lib/",
+  "clear_before_run": true,
+  "libraries": {
+    "math": "-lm"
+  }
+}
