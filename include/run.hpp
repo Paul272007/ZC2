@@ -1,8 +1,11 @@
 #ifndef RUN_H_
 #define RUN_H_
 
+#include <algorithm>
 #include <core.hpp>
+#include <filesystem>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <vector>
 

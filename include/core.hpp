@@ -13,5 +13,6 @@ using json = nlohmann::json;
 
 json get_conf();
 void write_conf(json conf);
+[[nodiscard]] bool ask();
 
 #endif // !CORE_H_

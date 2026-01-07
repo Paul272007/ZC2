@@ -29,3 +29,14 @@ void write_conf(json conf) {
     }
   }
 }
+
+bool ask() {
+  char input = 'Y';
+  cout << "[Y/n] ";
+  cin >> input;
+  while (input != 'Y' && input != 'n') {
+    cout << "Error: unexpected token" << endl << "[Y/n] ";
+    cin >> input;
+  }
+  return input == 'Y';
+}
