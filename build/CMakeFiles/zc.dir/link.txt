@@ -1,1 +1,0 @@
-/usr/bin/c++ CMakeFiles/zc.dir/src/core.cc.o CMakeFiles/zc.dir/src/header.cc.o CMakeFiles/zc.dir/src/lib.cc.o CMakeFiles/zc.dir/src/main.cc.o CMakeFiles/zc.dir/src/run.cc.o CMakeFiles/zc.dir/src/zcerror.cc.o -o zc 

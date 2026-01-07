@@ -1,5 +1,0 @@
-/home/paul/privat/apps/ZC2/build/CMakeFiles/zc.dir
-/home/paul/privat/apps/ZC2/build/CMakeFiles/edit_cache.dir
-/home/paul/privat/apps/ZC2/build/CMakeFiles/rebuild_cache.dir
-/home/paul/privat/apps/ZC2/build/_deps/json-build/CMakeFiles/edit_cache.dir
-/home/paul/privat/apps/ZC2/build/_deps/json-build/CMakeFiles/rebuild_cache.dir
