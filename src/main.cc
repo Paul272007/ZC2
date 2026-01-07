@@ -14,11 +14,15 @@ namespace fs = std::filesystem;
 using namespace std;
 
 // Valideur d'extension
-struct CheckExt : public CLI::Validator {
-  CheckExt(vector<string> exts) : Validator("ExtensionValidator") {
-    func_ = [exts](string &filename) {
+struct CheckExt : public CLI::Validator
+{
+  CheckExt(vector<string> exts) : Validator("ExtensionValidator")
+  {
+    func_ = [exts](string &filename)
+    {
       string actual_ext = fs::path(filename).extension().string();
-      for (const auto &ext : exts) {
+      for (const auto &ext : exts)
+      {
         if (actual_ext == ext)
           return string(); // OK
       }
@@ -29,11 +33,13 @@ struct CheckExt : public CLI::Validator {
 };
 
 // Valideur d'existence ET d'extension
-CLI::Validator FileExistAndExt(vector<string> exts) {
+CLI::Validator FileExistAndExt(vector<string> exts)
+{
   return CLI::ExistingFile & CheckExt(exts);
 }
 
-int main(int argc, char *argv[]) {
+int main(int argc, char *argv[])
+{
   CLI::App app{"ZC compiler, the easiest way to compile, execute and test "
                "C/C++ programs using GCC"};
   argv = app.ensure_utf8(argv);
@@ -154,9 +160,12 @@ int main(int argc, char *argv[]) {
 
   // ========================= Parsing =========================
   cout << "Command output:" << endl;
-  try {
+  try
+  {
     CLI11_PARSE(app, argc, argv);
-  } catch (const ZCError &e) {
+  }
+  catch (const ZCError &e)
+  {
     cerr << e << endl;
   }
   return 0;

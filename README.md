@@ -13,4 +13,4 @@ No simple uninstallation script available yet.
 ## Return codes
 
 - `0`: all good
-- `1`: idk bro
+- `1`: configuration error: `/etc/zc/conf.json` couldn't be loaded

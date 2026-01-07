@@ -3,6 +3,7 @@
 
 #include <exception>
 #include <fstream>
+#include <map>
 #include <nlohmann/json.hpp>
 #include <regex>
 #include <string>
@@ -13,7 +14,21 @@
 
 using json = nlohmann::json;
 
-json get_conf();
+struct Config
+{
+  std::string c_compiler = "gcc";
+  std::string cpp_compiler = "g++";
+  std::vector<std::string> flags = {"-Wall", "-Wextra"};
+  std::map<std::string, std::string> libraries = {{"math", "-lm"},
+                                                  {"ncurses", "-lncurses"}};
+  bool clear_before_run = true;
+  bool auto_keep = false;
+  int std = 99;
+  std::string include_dir = "/usr/local/include/";
+  std::string lib_dir = "/usr/local/lib/";
+};
+
+Config get_conf();
 void write_conf(json conf);
 [[nodiscard]] bool ask();
 
@@ -35,9 +50,11 @@ public:
   explicit FileParser(const std::string &path);
   Declarations parse();
   bool containsMain();
+  std::vector<std::string>
+  getInclusions(const std::map<std::string, std::string> &libs) const;
 
 private:
-  std::string readFile();
+  std::string readFile() const;
   std::vector<std::string> findAll(const std::string &text,
                                    const std::regex &re);
   std::string removeComments(const std::string &text);

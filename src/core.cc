@@ -1,18 +1,20 @@
 #include <core.hpp>
+#include <map>
+#include <regex>
 #include <string>
 #include <vector>
 
 using namespace std;
 
-json get_conf()
+Config get_conf()
 {
-  json config;
+  json json_conf;
   ifstream input(PATH);
   if (input.is_open())
   {
     try
     {
-      input >> config;
+      input >> json_conf;
     }
     catch (json::parse_error &e)
     {
@@ -21,7 +23,16 @@ json get_conf()
       throw ZCError(1, msg);
     }
   }
-  return config;
+  Config conf = {json_conf["c_compiler"],
+                 json_conf["cpp_compiler"],
+                 json_conf["flags"],
+                 json_conf["libraries"],
+                 json_conf["clear_before_run"],
+                 json_conf["auto_keep"],
+                 json_conf["std"],
+                 json_conf["include_dir"],
+                 json_conf["lib_dir"]};
+  return conf;
 }
 
 void write_conf(json conf)
@@ -94,7 +105,7 @@ Declarations FileParser::parse()
   return decl;
 }
 
-string FileParser::readFile()
+string FileParser::readFile() const
 {
   ifstream file(path_);
 
@@ -192,4 +203,25 @@ string findMainFile(const vector<string> &files)
     }
   }
   return "";
+}
+
+vector<string>
+FileParser::getInclusions(const map<string, string> &libraries) const
+{
+  string content = this->readFile();
+  vector<string> flags;
+  for (const auto [lib_name, lib_flag] : libraries)
+  {
+    string pattern = R"(#include\s*[<"])" + lib_name + R"(\.h[>"])";
+    regex re(pattern);
+
+    if (regex_search(content, re))
+    {
+      // if (find(flags.begin(), flags.end(), lib_flag) == flags.end())
+      // {
+      flags.push_back(lib_flag);
+      // }
+    }
+  }
+  return flags;
 }
