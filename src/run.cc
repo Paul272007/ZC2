@@ -1,4 +1,3 @@
-#include "core.hpp"
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
@@ -112,20 +111,39 @@ string Builder::buildCommand(const vector<string> &files,
   // Compiler
   cmd << (is_cpp ? conf_.cpp_compiler : conf_.c_compiler) << " ";
 
+  // Standard
+  cmd << "-std=" << conf_.std << " ";
+
   // Global flags
-  for (const auto &flag : conf_.flags) {
+  for (const auto &flag : conf_.flags)
+  {
     cmd << flag << " ";
   }
 
   // Source files
-  for (const auto &file : files) {
+  for (const auto &file : files)
+  {
     cmd << file << " ";
   }
 
   // Option -c
   if (compile_only)
   {
+    cmd << "-c ";
   }
+
+  // Output
+  cmd << "-o " << output_name << " ";
+
+  // libraries
+  for (const auto &lib : libs)
+  {
+    cmd << lib << " ";
+  }
+
+  // Color flags (gcc/g++)
+  cmd << "-fdiagnostics-color=always";
+  return cmd.str();
 }
 
 int run_func(const vector<string> &files, bool keep, bool plus,

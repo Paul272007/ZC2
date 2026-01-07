@@ -23,7 +23,7 @@ struct Config
                                                   {"ncurses", "-lncurses"}};
   bool clear_before_run = true;
   bool auto_keep = false;
-  int std = 99;
+  std::string std = "c99";
   std::string include_dir = "/usr/local/include/";
   std::string lib_dir = "/usr/local/lib/";
 };

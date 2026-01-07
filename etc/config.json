@@ -7,8 +7,9 @@
     "-Wall",
     "-Wextra"
   ],
-  "std": 99,
+  "std": "c90",
   "clear_before_run": true,
+  "auto_keep": true,
   "libraries": {
     "math": "-lm"
   }
