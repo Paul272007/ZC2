@@ -6,10 +6,12 @@
 #include <iostream>
 #include <string>
 
-class ZCError : public std::exception {
+class ZCError : public std::exception
+{
 public:
   ZCError(int code, std::string message);
   void display(std::ostream &f = std::cout) const;
+  int code() const;
   virtual ~ZCError();
 
 private:

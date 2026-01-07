@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <core.hpp>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -20,51 +21,75 @@ int Builder::run(const vector<string> &files, const vector<string> &args,
   bool is_cpp = plus || this->hasCppExt(files);
   string main_program_path = "";
 
-  if (!files.empty())
+  if (files.empty())
   {
-    // main_program_path = fs::path(files[0]).stem().string();
-    main_program_path = findMainFile(files);
+    throw ZCError(2, "No source files provided.");
   }
+
+  if (compile_only)
+  {
+    main_program_path = fs::path(files[0]).stem().string();
+  }
+  else
+  {
+    main_program_path = findMainFile(files);
+    if (main_program_path.empty())
+    {
+      throw ZCError(3, "No main function found in the provided files.");
+    }
+  }
+  debug("Main file found: " + main_program_path);
 
   vector<string> needed_libs = this->getInclusions(files);
 
   string output_name =
       compile_only ? (main_program_path + ".o") : main_program_path;
+
   string cmd =
       buildCommand(files, needed_libs, is_cpp, compile_only, output_name);
 
-  if (conf_.clear_before_run)
-  {
-    system("clear");
-  }
-  cout << "Compiling: " << cmd << endl;
+  debug("Build command: " + cmd);
+  cout << flush;
   int compile_res = system(cmd.c_str());
 
   if (compile_res != 0)
   {
-    cerr << "Compilation failed." << endl;
-    return 4;
+    // TODO : add a line the width of the terminal window
+    throw ZCError(4, "Compilation failed.");
   }
 
   if (compile_only)
   {
+    success("Compilation successful.");
     cout << "Object file created: " << output_name << endl;
     return 0;
   }
 
-  cout << "--- Execution ---\n" << endl;
+  /*
+  if (conf_.clear_before_run)
+  {
+    system("clear");
+  }
+  */
+  // TODO : add a line the width of the terminal window instead of this shit
+  cout << "\n===================================================" << endl;
+  success("Compilation successful.");
+  info("Executing program...");
 
-  string exec_cmd = "./" + output_name;
+  // Get absolute path of output binary
+  string exec_cmd = fs::absolute(output_name).string();
   for (const auto &arg : args)
   {
-    exec_cmd += " " + arg;
+    exec_cmd += " " + escape_shell_arg(arg);
   }
 
+  // debug("Execution command: " + exec_cmd);
   int run_res = system(exec_cmd.c_str());
 
   if (!conf_.auto_keep && !keep && fs::exists(output_name))
   {
     fs::remove(output_name);
+    debug("Temporary binary file removed: " + output_name);
   }
   return (run_res == 0) ? 0 : 5;
 }
@@ -123,7 +148,7 @@ string Builder::buildCommand(const vector<string> &files,
   // Source files
   for (const auto &file : files)
   {
-    cmd << file << " ";
+    cmd << escape_shell_arg(file) << " ";
   }
 
   // Option -c

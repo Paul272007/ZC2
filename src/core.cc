@@ -1,3 +1,4 @@
+#include <colors.h>
 #include <core.hpp>
 #include <map>
 #include <regex>
@@ -224,4 +225,42 @@ FileParser::getInclusions(const map<string, string> &libraries) const
     }
   }
   return flags;
+}
+
+void success(const string &msg)
+{
+  cout << GREEN << "[SUCCESS] " << COLOR_RESET << msg << endl;
+}
+
+void debug(const string &msg)
+{
+  cout << CYAN << "[DEBUG]   " << COLOR_RESET << msg << endl;
+}
+
+void warning(const string &msg)
+{
+  cout << YELLOW << "[WARNING] " << COLOR_RESET << msg << endl;
+}
+
+void info(const string &msg)
+{
+  cout << BLUE << "[INFO]    " << COLOR_RESET << msg << endl;
+}
+
+string escape_shell_arg(const string &arg)
+{
+  string escaped = "'";
+  for (char c : arg)
+  {
+    if (c == '\'')
+    {
+      escaped += "'\\''";
+    }
+    else
+    {
+      escaped += c;
+    }
+  }
+  escaped += "'";
+  return escaped;
 }

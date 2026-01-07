@@ -28,6 +28,11 @@ struct Config
   std::string lib_dir = "/usr/local/lib/";
 };
 
+std::string escape_shell_arg(const std::string &arg);
+void success(const std::string &msg);
+void debug(const std::string &msg);
+void warning(const std::string &msg);
+void info(const std::string &msg);
 Config get_conf();
 void write_conf(json conf);
 [[nodiscard]] bool ask();

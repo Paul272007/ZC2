@@ -159,7 +159,6 @@ int main(int argc, char *argv[])
       [&]() { header_init(head_init_target, head_force, head_output); });
 
   // ========================= Parsing =========================
-  cout << "Command output:" << endl;
   try
   {
     CLI11_PARSE(app, argc, argv);
@@ -167,6 +166,7 @@ int main(int argc, char *argv[])
   catch (const ZCError &e)
   {
     cerr << e << endl;
+    return e.code();
   }
   return 0;
 }
