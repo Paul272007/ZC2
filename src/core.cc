@@ -264,3 +264,42 @@ string escape_shell_arg(const string &arg)
   escaped += "'";
   return escaped;
 }
+
+bool FileParser::exists() const
+{
+  ifstream file(path_);
+
+  return (file.is_open());
+}
+
+vector<string> split(const string &s, char delimiter)
+{
+  vector<string> tokens;
+  string token;
+  istringstream tokenStream(s);
+  while (getline(tokenStream, token, delimiter))
+  {
+    tokens.push_back(token);
+  }
+  return tokens;
+}
+
+string upper(string str)
+{
+  for (char &c : str)
+  {
+    c = toupper(c);
+  }
+  return str;
+}
+
+bool FileParser::writeContent(const string &content) const
+{
+  ofstream file(path_);
+
+  if (!file.is_open())
+    return false;
+
+  file << content;
+  return file.good();
+}

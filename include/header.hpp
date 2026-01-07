@@ -1,7 +1,7 @@
 #ifndef HEADER_H_
 #define HEADER_H_
 
-#include <iostream>
+#include <core.hpp>
 #include <string>
 #include <vector>
 

@@ -17,3 +17,6 @@ No simple uninstallation script available yet.
 - `2`: bad command
 - `3`: no main function found
 - `4`: compilation error
+- `5`: file not found error
+- `6`: interrupted
+- `7`: error while writing file
