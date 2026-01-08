@@ -125,6 +125,15 @@ public:
    * @brief Write content to the file.
    */
   bool writeContent(const std::string &content) const;
+  /**
+   * @brief Append content to the file.
+   */
+  bool appendContent(const std::string &content) const;
+  /**
+   * @brief Write the formatted declarations to the file.
+   */
+  bool writeDeclarations(const Declarations &decls,
+                         const std::string &constant) const;
 
 private:
   /**

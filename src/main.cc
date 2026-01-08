@@ -165,7 +165,14 @@ int main(int argc, char *argv[])
   }
   catch (const ZCError &e)
   {
-    cerr << e << endl;
+    if (e.code() != 6)
+    {
+      cerr << e << endl;
+    }
+    else
+    {
+      cerr << "Operation canceled." << endl;
+    }
     return e.code();
   }
   return 0;
