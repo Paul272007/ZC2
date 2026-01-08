@@ -10,6 +10,206 @@
 
 using namespace std;
 
+struct VisitorContext
+{
+  Declarations *decls;
+  const string *content;
+  vector<pair<unsigned, unsigned>> typedef_ranges;
+};
+
+// ===================================================== Helpers
+
+/**
+ * @brief Helper to trim strings
+ */
+static void rtrim(string &s)
+{
+  while (!s.empty() && isspace(s.back()))
+  {
+    s.pop_back();
+  }
+}
+
+/**
+ * @brief Helper to get the (start, end) offsets of a cursor
+ */
+static pair<unsigned, unsigned> get_cursor_offsets(CXCursor cursor)
+{
+  CXSourceRange range = clang_getCursorExtent(cursor);
+  CXSourceLocation start = clang_getRangeStart(range);
+  CXSourceLocation end = clang_getRangeEnd(range);
+
+  unsigned start_offset, end_offset;
+  clang_getInstantiationLocation(start, nullptr, nullptr, nullptr,
+                                 &start_offset);
+  clang_getInstantiationLocation(end, nullptr, nullptr, nullptr, &end_offset);
+
+  return {start_offset, end_offset};
+}
+
+// Helper pour extraire le texte (réutilise les offsets)
+static string get_cursor_text(CXCursor cursor, const string &content)
+{
+  auto [start, end] = get_cursor_offsets(cursor);
+
+  if (end <= start || end > content.length())
+  {
+    return "";
+  }
+  return content.substr(start, end - start);
+}
+
+// Vérifie si un curseur est inclus dans un typedef déjà vu
+static bool is_inside_typedef(CXCursor cursor,
+                              const vector<pair<unsigned, unsigned>> &ranges)
+{
+  auto [start, end] = get_cursor_offsets(cursor);
+  for (const auto &range : ranges)
+  {
+    // Si l'élément commence APRES le début du typedef et finit AVANT la fin du
+    // typedef
+    if (start >= range.first && end <= range.second)
+    {
+      if (start == range.first && end == range.second)
+        continue;
+      return true;
+    }
+  }
+  return false;
+}
+
+// --- Visiteurs ---
+
+// PASSE 1 : Repérage des typedefs
+static CXChildVisitResult visitor_find_typedefs(CXCursor cursor,
+                                                CXCursor parent,
+                                                CXClientData client_data)
+{
+  auto *ctx = static_cast<VisitorContext *>(client_data);
+  CXCursorKind kind = clang_getCursorKind(cursor);
+
+  // On ignore ce qui n'est pas dans le fichier principal
+  CXSourceLocation loc = clang_getCursorLocation(cursor);
+  if (!clang_Location_isFromMainFile(loc))
+    return CXChildVisit_Continue;
+
+  if (kind == CXCursor_TypedefDecl)
+  {
+    ctx->typedef_ranges.push_back(get_cursor_offsets(cursor));
+  }
+
+  return CXChildVisit_Continue; // On continue pour tout trouver
+}
+
+// PASSE 2 : Extraction
+static CXChildVisitResult visitor_extract(CXCursor cursor, CXCursor parent,
+                                          CXClientData client_data)
+{
+  auto *ctx = static_cast<VisitorContext *>(client_data);
+  CXCursorKind kind = clang_getCursorKind(cursor);
+
+  if (clang_getCursorLinkage(cursor) == CXLinkage_Internal)
+    return CXChildVisit_Continue;
+
+  CXSourceLocation loc = clang_getCursorLocation(cursor);
+  if (!clang_Location_isFromMainFile(loc))
+    return CXChildVisit_Continue;
+
+  // Si c'est une structure/enum/union, on vérifie si elle est "mangée" par un
+  // typedef
+  if (kind == CXCursor_EnumDecl || kind == CXCursor_StructDecl ||
+      kind == CXCursor_UnionDecl)
+  {
+    if (is_inside_typedef(cursor, ctx->typedef_ranges))
+    {
+      return CXChildVisit_Continue; // On l'ignore, le typedef la contient déjà
+    }
+  }
+
+  // Extraction du texte
+  string text = get_cursor_text(cursor, *ctx->content);
+  if (text.empty())
+    return CXChildVisit_Continue;
+
+  // Dispatch selon le type
+  if (kind == CXCursor_InclusionDirective)
+  {
+    ctx->decls->includes.push_back(text + "\n");
+  }
+  else if (kind == CXCursor_MacroDefinition)
+  {
+    if (!clang_Cursor_isMacroBuiltin(cursor))
+    {
+      ctx->decls->macros.push_back(text);
+    }
+  }
+  else if (kind == CXCursor_TypedefDecl)
+  {
+    rtrim(text);
+    if (!text.empty() && text.back() == ';')
+      text.pop_back();
+    ctx->decls->typedefs.push_back(text);
+  }
+  else if (kind == CXCursor_EnumDecl)
+  {
+    if (clang_isCursorDefinition(cursor))
+    {
+      ctx->decls->enums.push_back(text);
+    }
+  }
+  else if (kind == CXCursor_StructDecl)
+  {
+    if (clang_isCursorDefinition(cursor))
+    {
+      ctx->decls->structs.push_back(text);
+    }
+  }
+  else if (kind == CXCursor_UnionDecl)
+  {
+    if (clang_isCursorDefinition(cursor))
+    {
+      ctx->decls->unions.push_back(text);
+    }
+  }
+  else if (kind == CXCursor_VarDecl)
+  {
+    // Nettoyage variables globales
+    size_t equal_pos = text.find('=');
+    if (equal_pos != string::npos)
+      text = text.substr(0, equal_pos);
+
+    rtrim(text);
+    if (!text.empty() && text.back() == ';')
+      text.pop_back();
+
+    if (text.find("extern") == string::npos)
+      text = "extern " + text;
+    ctx->decls->globals.push_back(text);
+  }
+  else if (kind == CXCursor_FunctionDecl)
+  {
+    CXString name_str = clang_getCursorSpelling(cursor);
+    string name = clang_getCString(name_str);
+    clang_disposeString(name_str);
+
+    if (name != "main")
+    {
+      size_t brace_pos = text.find('{');
+      if (brace_pos != string::npos)
+        text = text.substr(0, brace_pos);
+
+      rtrim(text);
+      if (!text.empty() && text.back() == ';')
+        text.pop_back();
+      ctx->decls->functions.push_back(text);
+    }
+  }
+
+  return CXChildVisit_Continue;
+}
+
+// ================================== Functions that will get exported
+
 Config get_conf()
 {
   json json_conf;
@@ -70,113 +270,88 @@ bool ask()
   return input == 'Y';
 }
 
+void success(const string &msg)
+{
+  cout << GREEN << "[SUCCESS] " << COLOR_RESET << msg << endl;
+}
+
+void debug(const string &msg)
+{
+  cout << CYAN << "[DEBUG]   " << COLOR_RESET << msg << endl;
+}
+
+void warning(const string &msg)
+{
+  cout << YELLOW << "[WARNING] " << COLOR_RESET << msg << endl;
+}
+
+void info(const string &msg)
+{
+  cout << BLUE << "[INFO]    " << COLOR_RESET << msg << endl;
+}
+
+string escape_shell_arg(const string &arg)
+{
+  string escaped = "'";
+  for (char c : arg)
+  {
+    if (c == '\'')
+    {
+      escaped += "'\\''";
+    }
+    else
+    {
+      escaped += c;
+    }
+  }
+  escaped += "'";
+  return escaped;
+}
+
+vector<string> split(const string &s, char delimiter)
+{
+  vector<string> tokens;
+  string token;
+  istringstream tokenStream(s);
+  while (getline(tokenStream, token, delimiter))
+  {
+    tokens.push_back(token);
+  }
+  return tokens;
+}
+
+string upper(string str)
+{
+  for (char &c : str)
+  {
+    c = toupper(c);
+  }
+  return str;
+}
+
+string findMainFile(const vector<string> &files)
+{
+  for (const auto &path : files)
+  {
+    if (path.find(".c") == string::npos && path.find(".cpp") == string::npos &&
+        path.find(".cc") == string::npos && path.find(".cxx") == string::npos)
+    {
+      continue;
+    }
+
+    FileParser parser(path);
+    if (parser.containsMain())
+    {
+      size_t lastIndex = path.find_last_of(".");
+      return path.substr(0, lastIndex);
+    }
+  }
+  return "";
+}
+
+// ================================== FileParser Class
+
 FileParser::FileParser(const string &path) : path_(path) {}
-
-static CXChildVisitResult visitor(CXCursor cursor, CXCursor parent,
-                                  CXClientData client_data)
-{
-  // On récupère notre structure via le pointeur client_data
-  auto *decls = static_cast<Declarations *>(client_data);
-
-  CXCursorKind kind = clang_getCursorKind(cursor);
-
-  // Extraction du nom (ou de la ligne de code)
-  CXString spelling = clang_getCursorSpelling(cursor);
-  std::string name = clang_getCString(spelling);
-
-  // Remplissage selon le type
-  if (kind == CXCursor_InclusionDirective)
-  {
-    decls->includes.push_back(name);
-  }
-  else if (kind == CXCursor_MacroDefinition)
-  {
-    decls->macros.push_back(name);
-  }
-  else if (kind == CXCursor_FunctionDecl)
-  {
-    decls->functions.push_back(name);
-  }
-  else if (kind == CXCursor_StructDecl || kind == CXCursor_UnionDecl)
-  {
-    // On ne prend que la définition, pas les déclarations anticipées
-    if (clang_isCursorDefinition(cursor))
-    {
-      decls->structs.push_back(name);
-    }
-  }
-  else if (kind == CXCursor_EnumDecl)
-  {
-    decls->enums.push_back(name);
-  }
-
-  clang_disposeString(spelling);
-  return CXChildVisit_Continue; // Continue vers le prochain élément
-}
-
-Declarations FileParser::parse()
-{
-  Declarations decls;
-  CXIndex index = clang_createIndex(0, 0);
-
-  unsigned options = CXTranslationUnit_DetailedPreprocessingRecord;
-  CXTranslationUnit unit = clang_parseTranslationUnit(
-      index, path_.c_str(), nullptr, 0, nullptr, 0, options);
-  if (unit == nullptr)
-  {
-    throw ZCError(9, "Unable to parse translation unit: " + path_);
-  }
-  CXCursor cursor = clang_getTranslationUnitCursor(unit);
-
-  clang_visitChildren(cursor, visitor, &decls);
-  clang_disposeTranslationUnit(unit);
-  clang_disposeIndex(index);
-
-  /*
-  Declarations decl;
-
-  string raw_content = readFile();
-
-  if (raw_content.empty())
-    return decl;
-
-  string content = removeComments(raw_content);
-
-  // Works
-  regex re_include(R"((?:^|\n)\s*#include\s+[^\r\n]*)");
-  decl.includes = findAll(content, re_include);
-
-  // Macros
-  // #define + alphanum + non-parenthesis
-  regex re_macro(R"((?:^|\n)\s*#define\s+[A-Z0-9_]+\s+[^\(\r\n]+)");
-  // Function macros
-  regex re_func_macro(
-      R"((?:^|\n)\s*#define\s+[A-Z0-9_]+\s*\([^)]*\)\s*[^\r\n]+)");
-  auto matches = findAll(content, re_macro);
-  auto func_matches = findAll(content, re_func_macro);
-  decl.macros.insert(decl.macros.end(), matches.begin(), matches.end());
-  decl.macros.insert(decl.macros.end(), func_matches.begin(),
-                     func_matches.end());
-
-  decl.structs = extractBlock(content, "struct");
-
-  regex re_func(
-      R"((?:^|\n)(?:[a-zA-Z0-9_]+\s+)+(?:\*+\s*)?[a-zA-Z0-9_]+\s*\([^)]*\)\s*(?=\{))");
-  auto raw_funcs = findAll(content, re_func);
-
-  for (const auto &f : raw_funcs)
-  {
-    // Nettoyage sommaire des retours ligne initiaux si présents à cause du
-    // (?:^|\n)
-    string clean_f = regex_replace(f, regex(R"(^\n)"), "");
-    if (clean_f.find("main") == string::npos && clean_f.find("static") != 0)
-    {
-      decl.functions.push_back(clean_f);
-    }
-  }*/
-
-  return decls;
-}
 
 string FileParser::readFile() const
 {
@@ -187,6 +362,52 @@ string FileParser::readFile() const
   stringstream buffer;
   buffer << file.rdbuf();
   return buffer.str();
+}
+
+Declarations FileParser::parse()
+{
+  Declarations decls;
+
+  // 1. Lire le contenu du fichier pour l'extraction de texte
+  string content = readFile();
+  if (content.empty())
+    return decls;
+
+  // 2. Initialiser l'index libclang
+  CXIndex index = clang_createIndex(0, 0);
+
+  // 3. Arguments de compilation (très important pour les headers)
+  // On ajoute le dossier include courant et on force le mode C
+  const char *args[] = {"-x", "c", "-I.", "-Iinclude"};
+
+  // 4. Parser le fichier
+  CXTranslationUnit unit = clang_parseTranslationUnit(
+      index, path_.c_str(), args, std::size(args), nullptr, 0,
+      CXTranslationUnit_DetailedPreprocessingRecord |
+          CXTranslationUnit_KeepGoing);
+
+  if (unit == nullptr)
+  {
+    // Fallback ou erreur silencieuse, selon votre besoin.
+    // Ici on lance l'erreur comme dans votre code original.
+    clang_disposeIndex(index);
+    throw ZCError(9, "Unable to parse translation unit: " + path_);
+  }
+
+  // 5. Lancer le visiteur
+  CXCursor cursor = clang_getTranslationUnitCursor(unit);
+  VisitorContext ctx = {&decls, &content};
+  // clang_visitChildren(cursor, visitor, &ctx);
+  // 1
+  clang_visitChildren(cursor, visitor_find_typedefs, &ctx);
+  // 2
+  clang_visitChildren(cursor, visitor_extract, &ctx);
+
+  // 6. Nettoyage
+  clang_disposeTranslationUnit(unit);
+  clang_disposeIndex(index);
+
+  return decls;
 }
 
 vector<string> FileParser::findAll(const string &text, const regex &re)
@@ -258,26 +479,6 @@ bool FileParser::containsMain()
   return regex_search(content, re_main);
 }
 
-string findMainFile(const vector<string> &files)
-{
-  for (const auto &path : files)
-  {
-    if (path.find(".c") == string::npos && path.find(".cpp") == string::npos &&
-        path.find(".cc") == string::npos && path.find(".cxx") == string::npos)
-    {
-      continue;
-    }
-
-    FileParser parser(path);
-    if (parser.containsMain())
-    {
-      size_t lastIndex = path.find_last_of(".");
-      return path.substr(0, lastIndex);
-    }
-  }
-  return "";
-}
-
 vector<string>
 FileParser::getInclusions(const map<string, string> &libraries) const
 {
@@ -299,70 +500,11 @@ FileParser::getInclusions(const map<string, string> &libraries) const
   return flags;
 }
 
-void success(const string &msg)
-{
-  cout << GREEN << "[SUCCESS] " << COLOR_RESET << msg << endl;
-}
-
-void debug(const string &msg)
-{
-  cout << CYAN << "[DEBUG]   " << COLOR_RESET << msg << endl;
-}
-
-void warning(const string &msg)
-{
-  cout << YELLOW << "[WARNING] " << COLOR_RESET << msg << endl;
-}
-
-void info(const string &msg)
-{
-  cout << BLUE << "[INFO]    " << COLOR_RESET << msg << endl;
-}
-
-string escape_shell_arg(const string &arg)
-{
-  string escaped = "'";
-  for (char c : arg)
-  {
-    if (c == '\'')
-    {
-      escaped += "'\\''";
-    }
-    else
-    {
-      escaped += c;
-    }
-  }
-  escaped += "'";
-  return escaped;
-}
-
 bool FileParser::exists() const
 {
   ifstream file(path_);
 
   return (file.is_open());
-}
-
-vector<string> split(const string &s, char delimiter)
-{
-  vector<string> tokens;
-  string token;
-  istringstream tokenStream(s);
-  while (getline(tokenStream, token, delimiter))
-  {
-    tokens.push_back(token);
-  }
-  return tokens;
-}
-
-string upper(string str)
-{
-  for (char &c : str)
-  {
-    c = toupper(c);
-  }
-  return str;
 }
 
 bool FileParser::writeContent(const string &content) const
@@ -397,14 +539,17 @@ bool FileParser::writeDeclarations(const Declarations &decls,
                                    const string &constant) const
 {
   stringstream content;
-  content << "#ifndef " << constant << '\n';
-  content << "#define " << constant << "\n\n";
 
+  // Custom header
   content << "/*\n\tThis file was automatically generated by ZC\n";
   auto now = chrono::system_clock::now();
   string s = format("{:%F %T}", now);
   content << "\tDate of creation: " << s << '\n';
   content << "\tEditing this file manually could break it.\n*/\n\n";
+
+  // Header guards
+  content << "#ifndef " << constant << '\n';
+  content << "#define " << constant << "\n\n";
 
   if (!decls.includes.empty())
   {
@@ -413,7 +558,7 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     {
       content << inc;
     }
-    content << "\n\n";
+    content << '\n';
   }
 
   if (!decls.macros.empty())
@@ -421,9 +566,9 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     content << "/* Macros */\n";
     for (const auto &macro : decls.macros)
     {
-      content << macro << '\n';
+      content << "#define " << macro << '\n';
     }
-    content << "\n\n";
+    content << '\n';
   }
 
   if (!decls.enums.empty())
@@ -431,8 +576,9 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     content << "/* Enums */\n";
     for (const auto &en : decls.enums)
     {
-      content << en << "\n\n";
+      content << en << ";\n";
     }
+    content << '\n';
   }
 
   if (!decls.unions.empty())
@@ -440,8 +586,9 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     content << "/* Unions */\n";
     for (const auto &un : decls.unions)
     {
-      content << un << "\n\n";
+      content << un << ";\n";
     }
+    content << '\n';
   }
 
   if (!decls.structs.empty())
@@ -449,8 +596,9 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     content << "/* Structures */\n";
     for (const auto &struc : decls.structs)
     {
-      content << struc << "\n\n";
+      content << struc << ";\n";
     }
+    content << '\n';
   }
 
   if (!decls.typedefs.empty())
@@ -460,6 +608,7 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     {
       content << td << ";\n";
     }
+    content << '\n';
   }
 
   if (!decls.globals.empty())
@@ -469,6 +618,7 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     {
       content << glob << ";\n";
     }
+    content << '\n';
   }
 
   if (!decls.functions.empty())
@@ -476,11 +626,14 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     content << "/* Functions */\n";
     for (const auto &func : decls.functions)
     {
-      content << func << ";\n\n";
+      content << func << ";\n";
     }
+    content << '\n';
   }
 
-  content << "#endif // !" << constant << "\n";
+  content << "\n#endif // !" << constant << "\n";
 
   return writeContent(content.str());
 }
+
+FileParser::~FileParser() {}

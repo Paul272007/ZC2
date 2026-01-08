@@ -103,6 +103,7 @@ class FileParser
 {
 public:
   explicit FileParser(const std::string &path);
+  ~FileParser();
   /**
    * @brief Parse the file and extract declarations.
    */
