@@ -28,3 +28,7 @@ target_link_libraries(zc PRIVATE
   nlohmann_json::nlohmann_json
   libclang
 )
+
+install(TARGETS zc DESTINATION bin)
+
+install(FILES etc/config.json DESTINATION /etc/zc)

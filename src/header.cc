@@ -90,7 +90,7 @@ int header_init(string h, bool force, string output)
   stringstream content;
   content << "#ifndef " << constant.str() << '\n';
   content << "#define " << constant.str() << "\n\n\n";
-  content << "#endif // !" << constant.str() << "\n";
+  content << "#endif // !" << constant.str() << '\n';
 
   if (!parser.writeContent(content.str()))
   {

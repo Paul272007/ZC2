@@ -1,16 +1,22 @@
 # ZC
 
+## Dependencies
+
+- Clang/LLVM
+- A Linux-like OS
+- Cmake
+
 ## Installing
 
-No simple installation script available yet.
+Simply run `./install.sh` with root privileges from the root of the repository.
 
 ## Uninstalling
 
-No simple uninstallation script available yet.
+Simply run `./uninstall.sh` with root privileges from the root of the repository.
 
 ## Usage
 
-## Return codes
+## Commands return codes
 
 - `0`: all good
 - `1`: configuration error: `/etc/zc/conf.json` couldn't be loaded

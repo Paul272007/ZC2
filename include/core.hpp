@@ -14,7 +14,18 @@
 
 // Macros
 
-#define PATH "../etc/config.json"
+// clang-format off
+#if defined(_WIN32) || defined(_WIN64)
+  // On Windows, store config in the current directory or AppData
+  #define PATH "config.json"
+#elif defined(__APPLE__)
+  // Idk shit bout macOS
+  // js hope it follows Unix standards
+  #define PATH "/usr/local/etc/zc/config.json"
+#else
+  #define PATH "/etc/zc/config.json"
+#endif
+// clang-format on
 
 using json = nlohmann::json;
 
