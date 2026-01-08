@@ -1,14 +1,15 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(ZC VERSION 1.0 LANGUAGES CXX)
+project(ZC VERSION 1.0 LANGUAGES C CXX)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 include_directories(include)
-
 include_directories(SYSTEM external)
+
+find_package(Clang REQUIRED)
 
 file(GLOB SOURCES "src/*.cc")
 
@@ -22,4 +23,8 @@ FetchContent_MakeAvailable(json)
 
 add_executable(zc ${SOURCES})
 
-target_link_libraries(zc PRIVATE nlohmann_json::nlohmann_json)
+target_include_directories(zc PRIVATE ${CLANG_INCLUDE_DIRS})
+target_link_libraries(zc PRIVATE
+  nlohmann_json::nlohmann_json
+  libclang
+)

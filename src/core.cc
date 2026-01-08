@@ -1,4 +1,5 @@
 #include <chrono>
+#include <clang-c/Index.h>
 #include <colors.h>
 #include <core.hpp>
 #include <format>
@@ -71,8 +72,67 @@ bool ask()
 
 FileParser::FileParser(const string &path) : path_(path) {}
 
+static CXChildVisitResult visitor(CXCursor cursor, CXCursor parent,
+                                  CXClientData client_data)
+{
+  // On récupère notre structure via le pointeur client_data
+  auto *decls = static_cast<Declarations *>(client_data);
+
+  CXCursorKind kind = clang_getCursorKind(cursor);
+
+  // Extraction du nom (ou de la ligne de code)
+  CXString spelling = clang_getCursorSpelling(cursor);
+  std::string name = clang_getCString(spelling);
+
+  // Remplissage selon le type
+  if (kind == CXCursor_InclusionDirective)
+  {
+    decls->includes.push_back(name);
+  }
+  else if (kind == CXCursor_MacroDefinition)
+  {
+    decls->macros.push_back(name);
+  }
+  else if (kind == CXCursor_FunctionDecl)
+  {
+    decls->functions.push_back(name);
+  }
+  else if (kind == CXCursor_StructDecl || kind == CXCursor_UnionDecl)
+  {
+    // On ne prend que la définition, pas les déclarations anticipées
+    if (clang_isCursorDefinition(cursor))
+    {
+      decls->structs.push_back(name);
+    }
+  }
+  else if (kind == CXCursor_EnumDecl)
+  {
+    decls->enums.push_back(name);
+  }
+
+  clang_disposeString(spelling);
+  return CXChildVisit_Continue; // Continue vers le prochain élément
+}
+
 Declarations FileParser::parse()
 {
+  Declarations decls;
+  CXIndex index = clang_createIndex(0, 0);
+
+  unsigned options = CXTranslationUnit_DetailedPreprocessingRecord;
+  CXTranslationUnit unit = clang_parseTranslationUnit(
+      index, path_.c_str(), nullptr, 0, nullptr, 0, options);
+  if (unit == nullptr)
+  {
+    throw ZCError(9, "Unable to parse translation unit: " + path_);
+  }
+  CXCursor cursor = clang_getTranslationUnitCursor(unit);
+
+  clang_visitChildren(cursor, visitor, &decls);
+  clang_disposeTranslationUnit(unit);
+  clang_disposeIndex(index);
+
+  /*
   Declarations decl;
 
   string raw_content = readFile();
@@ -82,11 +142,21 @@ Declarations FileParser::parse()
 
   string content = removeComments(raw_content);
 
+  // Works
   regex re_include(R"((?:^|\n)\s*#include\s+[^\r\n]*)");
   decl.includes = findAll(content, re_include);
 
+  // Macros
+  // #define + alphanum + non-parenthesis
   regex re_macro(R"((?:^|\n)\s*#define\s+[A-Z0-9_]+\s+[^\(\r\n]+)");
-  decl.macros = findAll(content, re_macro);
+  // Function macros
+  regex re_func_macro(
+      R"((?:^|\n)\s*#define\s+[A-Z0-9_]+\s*\([^)]*\)\s*[^\r\n]+)");
+  auto matches = findAll(content, re_macro);
+  auto func_matches = findAll(content, re_func_macro);
+  decl.macros.insert(decl.macros.end(), matches.begin(), matches.end());
+  decl.macros.insert(decl.macros.end(), func_matches.begin(),
+                     func_matches.end());
 
   decl.structs = extractBlock(content, "struct");
 
@@ -103,9 +173,9 @@ Declarations FileParser::parse()
     {
       decl.functions.push_back(clean_f);
     }
-  }
+  }*/
 
-  return decl;
+  return decls;
 }
 
 string FileParser::readFile() const
@@ -303,7 +373,13 @@ bool FileParser::writeContent(const string &content) const
     return false;
 
   file << content;
-  return file.good();
+  if (file.good())
+  {
+    success("File written: " + path_);
+    return true;
+  }
+  throw ZCError(7, "Error writing to file: " + path_);
+  return false;
 }
 
 bool FileParser::appendContent(const string &content) const
@@ -331,61 +407,77 @@ bool FileParser::writeDeclarations(const Declarations &decls,
   content << "\tEditing this file manually could break it.\n*/\n\n";
 
   if (!decls.includes.empty())
-    content << "/* Includes */\n";
-  for (const auto &inc : decls.includes)
   {
-    content << inc << '\n';
+    content << "/* Includes */\n";
+    for (const auto &inc : decls.includes)
+    {
+      content << inc;
+    }
+    content << "\n\n";
   }
-  content << '\n';
 
   if (!decls.macros.empty())
-    content << "/* Macros */\n";
-  for (const auto &macro : decls.macros)
   {
-    content << macro << '\n';
+    content << "/* Macros */\n";
+    for (const auto &macro : decls.macros)
+    {
+      content << macro << '\n';
+    }
+    content << "\n\n";
   }
-  content << '\n';
 
   if (!decls.enums.empty())
-    content << "/* Enums */\n";
-  for (const auto &en : decls.enums)
   {
-    content << en << "\n\n";
+    content << "/* Enums */\n";
+    for (const auto &en : decls.enums)
+    {
+      content << en << "\n\n";
+    }
   }
 
   if (!decls.unions.empty())
-    content << "/* Unions */\n";
-  for (const auto &un : decls.unions)
   {
-    content << un << "\n\n";
+    content << "/* Unions */\n";
+    for (const auto &un : decls.unions)
+    {
+      content << un << "\n\n";
+    }
   }
 
   if (!decls.structs.empty())
-    content << "/* Structures */\n";
-  for (const auto &struc : decls.structs)
   {
-    content << struc << "\n\n";
+    content << "/* Structures */\n";
+    for (const auto &struc : decls.structs)
+    {
+      content << struc << "\n\n";
+    }
   }
 
   if (!decls.typedefs.empty())
-    content << "/* Typedefs */\n";
-  for (const auto &td : decls.typedefs)
   {
-    content << td << ";\n";
+    content << "/* Typedefs */\n";
+    for (const auto &td : decls.typedefs)
+    {
+      content << td << ";\n";
+    }
   }
 
   if (!decls.globals.empty())
-    content << "/* Global variables */\n";
-  for (const auto &glob : decls.globals)
   {
-    content << glob << ";\n";
+    content << "/* Global variables */\n";
+    for (const auto &glob : decls.globals)
+    {
+      content << glob << ";\n";
+    }
   }
 
   if (!decls.functions.empty())
-    content << "/* Functions */\n";
-  for (const auto &func : decls.functions)
   {
-    content << func << ";\n\n";
+    content << "/* Functions */\n";
+    for (const auto &func : decls.functions)
+    {
+      content << func << ";\n\n";
+    }
   }
 
   content << "#endif // !" << constant << "\n";

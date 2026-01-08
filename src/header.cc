@@ -8,7 +8,7 @@ using namespace std;
 
 int header_create(vector<string> files, bool force, string output)
 {
-  debug("header_create called");
+  // debug("header_create called");
   if (files.size() == 0)
   {
     throw ZCError(5, "No input files provided.");
