@@ -1,6 +1,8 @@
 #ifndef _DISPLAY_H_
 #define _DISPLAY_H_
 
+#include <stdint.h>
+#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -87,40 +89,10 @@
 #define UP_SINGLE_RIGHT_DOUBLE              "\u2558"
 #define DOWN_SINGLE_RIGHT_DOUBLE            "\u2552"
 #define DOWN_DOUBLE_RIGHT_SINGLE            "\u2553"
-#define VERTICAL_DOUBLE_HOROZONTAL_SINGLE   "\u256B"
+#define VERTICAL_DOUBLE_HORIZONTAL_SINGLE   "\u256B"
 #define VERTICAL_SINGLE_HORIZONTAL_DOUBLE   "\u256A"
 #define LIGHT_UP_LEFT                       "\u2518"
 #define LIGHT_DOWN_RIGHT                    "\u250C"
-
-// #define TOP_LEFT     "\u250C"
-// #define TOP_RIGHT    "\u2510"
-// #define BOTTOM_LEFT  "\u2514"
-// #define BOTTOM_RIGHT "\u2518"
-// #define H_LINE       "\u2500"
-// #define DOUBLE_TOP_LEFT     "\u2554"
-// #define DOUBLE_TOP_RIGHT    "\u2557"
-// #define DOUBLE_BOTTOM_LEFT  "\u255A"
-// #define DOUBLE_BOTTOM_RIGHT "\u255D"
-// #define DOUBLE_H_LINE       "\u2550"
-// #define DOUBLE_V_LINE       "\u2551"
-// #define L_BOTTOM_LEFT       "\u2514"
-// #define L_BOTTOM_RIGHT      "\u2518"
-// #define L_TOP_LEFT          "\u250C"
-// #define L_TOP_RIGHT         "\u2510"
-// #define T_LEFT      "\u251C"
-// #define T_RIGHT     "\u2524"
-// #define T_TOP       "\u2534"
-// #define T_BOTTOM    "\u252C"
-// #define CROSS       "\u253C"
-// #define DOUBLE_T_LEFT      "\u2560"
-// #define DOUBLE_T_RIGHT     "\u2563"
-// #define DOUBLE_T_TOP       "\u2566"
-// #define DOUBLE_T_BOTTOM    "\u2569"
-// #define DOUBLE_CROSS       "\u256C"
-// #define ARROW_UP    "\u2191"
-// #define ARROW_DOWN  "\u2193"
-// #define ARROW_RIGHT "\u2192"
-// #define ARROW_LEFT  "\u2190"
 
 // Macros for the special font
 #define FONT_HEIGHT 5
@@ -133,6 +105,41 @@ extern "C"
 
 // The ascii art font
 extern const char UPPER[26][FONT_HEIGHT][FONT_WIDTH];
+
+typedef struct {
+  char *cross;
+  char *sepCross;
+  char *row;
+  char *col;
+  char *sepRow;
+  char *sepCol;
+  char *borderCol;
+  char *borderRow;
+  char *topT;
+  char *topSepT;
+  char *bottomSepT;
+  char *leftT;
+  char *rightT;
+  char *leftSepT;
+  char *rightSepT;
+  char *bottomT;
+  char *topLeftCorner;
+  char *bottomLeftCorner;
+  char *topRightCorner;
+  char *bottomRightCorner;
+} TableChars ;
+
+typedef struct {
+  // Number of columns and lines (including headers)
+  int n_cols;
+  int n_rows;
+  int *max_widths;
+  // Indicate if the first values for columns and rows are headers
+  // The body of the table
+  char ***content;
+  int8_t flags;
+  TableChars *chars;
+} Table;
 
 // Utility functions for displaying
 
