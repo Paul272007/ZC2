@@ -1,8 +1,11 @@
+#include "zcerror.hpp"
 #include <chrono>
 #include <clang-c/Index.h>
-#include <colors.h>
 #include <core.hpp>
+#include <display.h>
+#include <exception>
 #include <format>
+#include <fstream>
 #include <map>
 #include <regex>
 #include <string>
@@ -18,6 +21,16 @@ struct VisitorContext
 };
 
 // ===================================================== Helpers
+
+int len(const char *str)
+{
+  int i = 0;
+  while (*str++)
+  {
+    i++;
+  }
+  return i;
+}
 
 /**
  * @brief Helper to trim strings
@@ -214,28 +227,40 @@ Config get_conf()
 {
   json json_conf;
   ifstream input(PATH);
-  if (input.is_open())
+  if (!input.is_open())
   {
-    try
-    {
-      input >> json_conf;
-    }
-    catch (json::parse_error &e)
-    {
-      string msg = "JSON parse error: ";
-      msg += e.what();
-      throw ZCError(1, msg);
-    }
+    throw ZCError(1, "The config file couldn't be loaded.");
   }
-  Config conf = {json_conf["c_compiler"],
-                 json_conf["cpp_compiler"],
-                 json_conf["flags"],
-                 json_conf["libraries"],
-                 json_conf["clear_before_run"],
-                 json_conf["auto_keep"],
-                 json_conf["std"],
-                 json_conf["include_dir"],
-                 json_conf["lib_dir"]};
+  try
+  {
+    input >> json_conf;
+  }
+  catch (const json::parse_error &e)
+  {
+    string msg = "JSON parse error: ";
+    msg += e.what();
+    throw ZCError(1, msg);
+  }
+  catch (const exception &e)
+  {
+    cerr << e.what() << endl;
+  }
+  Config conf;
+  conf.c_compiler = json_conf.value("c_compiler", "gcc");
+  conf.cpp_compiler = json_conf.value("cpp_compiler", "g++");
+
+  conf.flags = json_conf.value<vector<string>>(
+      "flags", vector<string>{"-Wall", "-Wextra"});
+  conf.libraries =
+      json_conf.value<map<string, string>>("libraries", {{"math", "-lm"}});
+
+  conf.clear_before_run = json_conf.value<bool>("clear_before_run", true);
+  conf.auto_keep = json_conf.value<bool>("auto_keep", false);
+
+  conf.c_std = json_conf.value("c_std", "c99");
+  conf.cpp_std = json_conf.value("cpp_std", "c++17");
+  conf.include_dir = json_conf.value("include_dir", "/usr/local/include/");
+  conf.lib_dir = json_conf.value("lib_dir", "/usr/local/lib/");
   return conf;
 }
 
@@ -585,6 +610,11 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     content << '\n';
   }
 
+  content << '\n'
+          << "#ifdef __cplusplus\n"
+          << "extern \"C\" {\n"
+          << "#endif\n\n";
+
   if (!decls.enums.empty())
   {
     content << "/* Enums */\n";
@@ -645,7 +675,10 @@ bool FileParser::writeDeclarations(const Declarations &decls,
     content << '\n';
   }
 
-  content << "\n#endif // !" << constant << "\n";
+  content << "#ifdef __cplusplus\n"
+          << "}\n"
+          << "#endif\n"
+          << "\n#endif // !" << constant << "\n";
 
   return writeContent(content.str());
 }

@@ -7,10 +7,12 @@
     "-Wall",
     "-Wextra"
   ],
-  "std": "c90",
+  "c_std": "c99",
+  "cpp_std": "c++17",
   "clear_before_run": true,
   "auto_keep": true,
   "libraries": {
-    "math": "-lm"
+    "math": "-lm",
+    "ncurses": "-lncurses"
   }
 }

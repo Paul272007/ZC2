@@ -19,7 +19,7 @@ Simply run `./uninstall.sh` with root privileges from the root of the repository
 ## Commands return codes
 
 - `0`: all good
-- `1`: configuration error: `/etc/zc/conf.json` couldn't be loaded
+- `1`: configuration error: `/etc/zc/config.json` couldn't be loaded
 - `2`: bad command
 - `3`: no main function found
 - `4`: compilation error

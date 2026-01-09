@@ -137,7 +137,7 @@ string Builder::buildCommand(const vector<string> &files,
   cmd << (is_cpp ? conf_.cpp_compiler : conf_.c_compiler) << " ";
 
   // Standard
-  cmd << "-std=" << conf_.std << " ";
+  cmd << "-std=" << (is_cpp ? conf_.cpp_std : conf_.c_std) << " ";
 
   // Global flags
   for (const auto &flag : conf_.flags)

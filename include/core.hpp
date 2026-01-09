@@ -3,8 +3,6 @@
 
 // Includes
 
-#include <exception>
-#include <fstream>
 #include <map>
 #include <nlohmann/json.hpp>
 #include <regex>
@@ -40,7 +38,8 @@ struct Config
                                                   {"ncurses", "-lncurses"}};
   bool clear_before_run = true;
   bool auto_keep = false;
-  std::string std = "c99";
+  std::string c_std = "c99";
+  std::string cpp_std = "c++17";
   std::string include_dir = "/usr/local/include/";
   std::string lib_dir = "/usr/local/lib/";
 };
@@ -59,6 +58,10 @@ struct Declarations
 
 // Utilities
 
+/**
+ * @brief Get the length of a string
+ */
+int len(const char *str);
 /**
  * @brief Escapes a string to be safely used as a shell argument.
  */
