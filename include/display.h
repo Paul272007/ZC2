@@ -137,8 +137,10 @@ typedef struct {
   // Indicate if the first values for columns and rows are headers
   // The body of the table
   char ***content;
+  int **lengths;
   int8_t flags;
   TableChars *chars;
+  int current_line;
 } Table;
 
 // Utility functions for displaying
