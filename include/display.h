@@ -41,17 +41,16 @@
 #define U_WHITE   "\033[4;37m"
 
 // Background Colors
-#define BG_BLACK  "\033[40m"
-#define BG_RED    "\033[41m"
-#define BG_GREEN  "\033[42m"
-#define BG_YELLOW "\033[43m"
-#define BG_BLUE   "\033[44m"
-#define BG_PURPLE "\033[45m"
-#define BG_CYAN   "\033[46m"
-#define BG_WHITE  "\033[47m"
+#define BG_BLACK   "\033[40m"
+#define BG_RED     "\033[41m"
+#define BG_GREEN   "\033[42m"
+#define BG_YELLOW  "\033[43m"
+#define BG_BLUE    "\033[44m"
+#define BG_PURPLE  "\033[45m"
+#define BG_CYAN    "\033[46m"
+#define BG_WHITE   "\033[47m"
 
 // Special characters (e.g. borders / lines)
-
 #define LIGHT_VERTICAL_LEFT                 "\u2524"
 #define VERTICAL_SINGLE_LEFT_DOUBLE         "\u2561"
 #define VERTICAL_DOUBLE_LEFT_SINGLE         "\u2562"
@@ -93,6 +92,8 @@
 #define LIGHT_UP_LEFT                       "\u2518"
 #define LIGHT_DOWN_RIGHT                    "\u250C"
 
+// clang-format on
+
 // Macros for the special font
 #define FONT_HEIGHT 5
 #define FONT_WIDTH 6
@@ -102,94 +103,120 @@ extern "C"
 {
 #endif
 
-// The ascii art font
-extern const char UPPER[26][FONT_HEIGHT][FONT_WIDTH];
+  // Ascii art font
+  extern const char UPPER[26][FONT_HEIGHT][FONT_WIDTH];
 
-typedef struct {
-  char *cross;
-  char *sepCross;
-  char *row;
-  char *col;
-  char *sepRow;
-  char *sepCol;
-  char *borderCol;
-  char *borderRow;
-  char *topT;
-  char *topSepT;
-  char *bottomSepT;
-  char *leftT;
-  char *rightT;
-  char *leftSepT;
-  char *rightSepT;
-  char *bottomT;
-  char *topLeftCorner;
-  char *bottomLeftCorner;
-  char *topRightCorner;
-  char *bottomRightCorner;
-} TableChars ;
+  /**
+   * @brief Contains all characters corresponding to the width chosen by the
+   * user
+   */
+  typedef struct
+  {
+    char *cross;
+    char *sepCross;
+    char *sepSepCross;
+    char *row;
+    char *col;
+    char *sepRow;
+    char *sepCol;
+    char *borderCol;
+    char *borderRow;
+    char *topT;
+    char *topSepT;
+    char *bottomSepT;
+    char *leftT;
+    char *rightT;
+    char *leftSepT;
+    char *rightSepT;
+    char *bottomT;
+    char *topLeftCorner;
+    char *bottomLeftCorner;
+    char *topRightCorner;
+    char *bottomRightCorner;
+  } TableChars;
 
-typedef struct {
-  // Number of columns and lines (including headers)
-  int n_cols;
-  int n_rows;
-  int *max_widths;
-  // Indicate if the first values for columns and rows are headers
-  // The body of the table
-  char ***content;
-  int **lengths;
-  int8_t flags;
-  TableChars *chars;
-  int current_line;
-} Table;
+  /**
+   * @brief Table structure
+   */
+  typedef struct
+  {
+    // Number of columns in the table
+    int n_cols;
+    // Number of rows in the table
+    int n_rows;
+    // The lengths of each element in the table
+    int **lengths;
+    // The longuest width for each column
+    int *max_widths;
+    // The body of the table
+    char ***content;
+    // Flags that store informations about the thickess of each line
+    int8_t flags;
+    // Characters of the table borders
+    TableChars *chars;
+    // The current line that is being displayed
+    int current_line;
+  } Table;
 
-// Utility functions for displaying
+  // Utility functions for displaying
 
-/**
- * @brief Store the size of the terminal into height and width
- */
-void get_term_size(int *height, int *width);
+  /**
+   * @brief Store the size of the terminal into height and width
+   */
+  void get_term_size(int *height, int *width);
 
-/**
- * @brief Print out an ascii art version of the string.
- * Doesn't handle lowercase and special characters yet.
- */
-void title(const char *title);
+  /**
+   * @brief Print out an ascii art version of the string.
+   * Doesn't handle lowercase and special characters yet.
+   */
+  void title(const char *title);
 
-/**
- * @brief Print out the given text centered in a frame the size of the window.
- */
-void frame(const char *title);
+  /**
+   * @brief Print out the given text centered in a frame the size of the window.
+   */
+  void frame(const char *title);
 
-/**
- * @brief Print out a centered title in a frame.
- * Same limitations as the title() function
- */
-void header(const char *title);
+  /**
+   * @brief Print out a centered title in a frame.
+   * Same limitations as the title() function
+   */
+  void header(const char *title);
 
-/**
- * @brief Draw a horizontal line of length size.
- */
-void draw_h_line(int length);
+  /**
+   * @brief Draw a horizontal line of length size.
+   */
+  void line(int length);
 
-/**
- * @brief Draw a vertical line of length size.
- */
-void draw_v_line(int length);
+  /**
+   * @brief Print out length spaces
+   */
+  void padding(int length);
 
-/**
- * @brief Print out length spaces
- */
-void padding(int length);
-void table_top_line(int nb_col, const int *lengths);
-void table_bottom_line(int nb_col, const int *lengths);
-void table_middle_line(int nb_values, const char **values, const int *lengths);
-void separator(int nb_col, const int *lengths);
-
-Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders, int8_t hasColHeaders);
-void setTableThickness(Table *ptr, int8_t rowThickness, int8_t colThickness, int8_t rowSeparatorThickness, int8_t colSeparatorThickness, int8_t rowBorderThickness, int8_t colBorderThickness);
-void setTableContent(Table *ptr, char ***content);
-void deleteTable(Table *ptr);
-void drawTable(Table *ptr);
+  /**
+   * @brief Create a new Table
+   * @return a pointer to this new Table
+   */
+  Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders,
+                  int8_t hasColHeaders);
+  /**
+   * @brief Set the thickess of each border of the table
+   */
+  void setTableThickness(Table *ptr, int8_t rowThickness, int8_t colThickness,
+                         int8_t rowSeparatorThickness,
+                         int8_t colSeparatorThickness,
+                         int8_t rowBorderThickness, int8_t colBorderThickness);
+  /**
+   * @brief Set the content of the table
+   */
+  void setTableContent(Table *ptr, char ***content);
+  /**
+   * @brief Delete the table and free all its contents
+   */
+  void deleteTable(Table *ptr);
+  /**
+   * @brief Print out the Table
+   */
+  void drawTable(Table *ptr);
 
 #ifdef __cplusplus
 }

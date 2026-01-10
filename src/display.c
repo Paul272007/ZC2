@@ -30,7 +30,6 @@ Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders,
    * 8th bit : 1 if the column table borders are double lines, single lines otherwise
    */
   // clang-format on
-  // ptr->flags = 0b00000000;
   ptr->flags = 0;
   ptr->n_cols = n_cols;
   ptr->n_rows = n_rows;
@@ -159,6 +158,7 @@ static void freeTableChars(TableChars *ptr)
   safeFree(ptr->col);
   safeFree(ptr->cross);
   safeFree(ptr->sepCross);
+  safeFree(ptr->sepSepCross);
   safeFree(ptr->sepRow);
   safeFree(ptr->sepCol);
   safeFree(ptr->row);
@@ -189,7 +189,7 @@ void deleteTable(Table *ptr)
 /**
  * @brief For each column, get the size of the widest/longest element
  */
-static void getMaxWidths(Table *ptr)
+static void getWidths(Table *ptr)
 {
   for (int j = 0; j < ptr->n_cols; j++)
   {
@@ -222,10 +222,43 @@ static void getTableChars(Table *ptr)
   char *rowBorder = "-", *colBorder = "|", *bottomLeftCorner = " ",
        *bottomRightCorner = " ";
   char *leftT = " ", *leftSepT = " ", *rightT = " ", *rightSepT = " ";
-  char *cross = "+", *sepCross = "+";
+  char *cross = "+", *sepCross = "+", *sepSepCross = "+";
   // Initialise characters
+  // Cols and rows
   row = (rowThickness) ? DOUBLE_HORIZONTAL : LIGHT_HORIZONTAL;
   col = (colThickness) ? DOUBLE_VERTICAL : LIGHT_VERTICAL;
+  // Handle crosses
+  int isSepRowDouble = (hasColHeaders && rowSeparatorThickness);
+  int isSepColDouble = (hasRowHeaders && colSeparatorThickness);
+  sepCross = (isSepColDouble)
+                 ? (isSepRowDouble ? DOUBLE_VERTICAL_HORIZONTAL
+                                   : VERTICAL_DOUBLE_HORIZONTAL_SINGLE)
+                 : (isSepRowDouble ? VERTICAL_SINGLE_HORIZONTAL_DOUBLE
+                                   : LIGHT_VERTICAL_HORIZONTAL);
+  if (rowSeparatorThickness)
+  {
+    sepRow = DOUBLE_HORIZONTAL;
+    sepSepCross = (colSeparatorThickness) ? DOUBLE_VERTICAL_HORIZONTAL
+                                          : VERTICAL_SINGLE_HORIZONTAL_DOUBLE;
+  }
+  else
+  {
+    sepRow = LIGHT_HORIZONTAL;
+    sepSepCross = (colSeparatorThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
+                                          : LIGHT_VERTICAL_HORIZONTAL;
+  }
+  if (rowThickness)
+  {
+    cross = (colThickness) ? DOUBLE_VERTICAL_HORIZONTAL
+                           : VERTICAL_SINGLE_HORIZONTAL_DOUBLE;
+  }
+  else
+  {
+    cross = (colThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
+                           : LIGHT_VERTICAL_HORIZONTAL;
+  }
+  sepCol = (colSeparatorThickness) ? DOUBLE_VERTICAL : LIGHT_VERTICAL;
+  // Rest
   if (rowBorderThickness)
   {
     rowBorder = DOUBLE_HORIZONTAL;
@@ -243,7 +276,6 @@ static void getTableChars(Table *ptr)
       bottomLeftCorner = UP_SINGLE_RIGHT_DOUBLE;
       bottomRightCorner = UP_SINGLE_LEFT_DOUBLE;
     }
-    // ... (Logique T haut/bas conservée mais simplifiée pour la lisibilité)
     topT =
         (colThickness) ? DOUBLE_DOWN_HORIZONTAL : DOWN_SINGLE_HORIZONTAL_DOUBLE;
     bottomT =
@@ -253,8 +285,8 @@ static void getTableChars(Table *ptr)
     bottomSepT = (colSeparatorThickness) ? DOUBLE_UP_HORIZONTAL
                                          : UP_SINGLE_HORIZONTAL_DOUBLE;
   }
-  else
-  { // !rowBorderThickness
+  else // !rowBorderThickness
+  {
     rowBorder = LIGHT_HORIZONTAL;
     if (colBorderThickness)
     {
@@ -303,25 +335,6 @@ static void getTableChars(Table *ptr)
     rightSepT = (rowSeparatorThickness) ? VERTICAL_SINGLE_LEFT_DOUBLE
                                         : LIGHT_VERTICAL_LEFT;
   }
-
-  // Handle crosses
-  if (rowSeparatorThickness)
-  {
-    sepRow = DOUBLE_HORIZONTAL;
-    cross = (colThickness) ? DOUBLE_VERTICAL_HORIZONTAL
-                           : VERTICAL_SINGLE_HORIZONTAL_DOUBLE;
-    sepCross = (colSeparatorThickness) ? DOUBLE_VERTICAL_HORIZONTAL
-                                       : VERTICAL_SINGLE_HORIZONTAL_DOUBLE;
-  }
-  else
-  {
-    sepRow = LIGHT_HORIZONTAL;
-    cross = (colThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
-                           : LIGHT_VERTICAL_HORIZONTAL;
-    sepCross = (colSeparatorThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
-                                       : LIGHT_VERTICAL_HORIZONTAL;
-  }
-  sepCol = (colSeparatorThickness) ? DOUBLE_VERTICAL : LIGHT_VERTICAL;
   // Fill char struct
   if (ptr->chars->topLeftCorner)
     freeTableChars(ptr->chars); // Nettoyage si réappelé
@@ -403,9 +416,9 @@ static void tableColumnHeaderSeparator(Table *ptr)
   for (int i = 1; i < ptr->n_cols; i++)
   {
     if (hasRowHeaders && i == 1)
-      printf("%s", ptr->chars->sepCross);
+      printf("%s", ptr->chars->sepSepCross);
     else
-      printf("%s", ptr->chars->cross);
+      printf("%s", ptr->chars->sepCross);
 
     drawLine(ptr->max_widths[i], ptr->chars->sepRow);
   }
@@ -463,7 +476,7 @@ void drawTable(Table *ptr)
     return;
   int8_t hasColHeaders = getBit(ptr->flags, 1);
 
-  getMaxWidths(ptr);
+  getWidths(ptr);
   getTableChars(ptr);
 
   // Correction des noms de fonctions (snake_case -> camelCase)
@@ -487,6 +500,8 @@ void drawTable(Table *ptr)
   }
 
   tableBottomLine(ptr);
+  // In case the table is being displayed again
+  ptr->current_line = 0;
 }
 
 const char UPPER[26][FONT_HEIGHT][FONT_WIDTH] = {
@@ -517,90 +532,27 @@ const char UPPER[26][FONT_HEIGHT][FONT_WIDTH] = {
     {"$   $", " $ $ ", "  $  ", "  $  ", "  $  "},
     {"$$$$$", "   $ ", "  $  ", " $   ", "$$$$$"}};
 
+void line(int length)
+{
+  for (int i = 0; i < length; i++)
+  {
+    printf("%s", LIGHT_HORIZONTAL);
+  }
+}
+
 static void top_line(int length)
 {
   printf("\n%s", LIGHT_DOWN_RIGHT);
-  draw_h_line(length - 2);
+  line(length - 2);
   printf("%s\n", LIGHT_DOWN_LEFT);
 }
 
 static void bottom_line(int length)
 {
   printf("%s", LIGHT_HORIZONTAL);
-  draw_h_line(length - 2);
+  line(length - 2);
   printf("%s\n", LIGHT_UP_LEFT);
 }
-
-/*
-void table_top_line(int nb_col, const int *lengths)
-{
-  // Top left corner
-  printf("%s", LIGHT_DOWN_RIGHT);
-  int last_col = nb_col - 1;
-  for (int i = 0; i < nb_col; i++)
-  {
-    draw_h_line(lengths[i]);
-    if (!(i == last_col))
-    {
-      printf("%s", LIGHT_DOWN_HORIZONTAL);
-    }
-  }
-  // Top right corner
-  printf("%s\n", LIGHT_DOWN_LEFT);
-}
-
-void table_bottom_line(int nb_col, const int *lengths)
-{
-  // Bottom left corner
-  printf("%s", LIGHT_UP_RIGHT);
-  int last_col = nb_col - 1;
-  for (int i = 0; i < nb_col; i++)
-  {
-    draw_h_line(lengths[i]);
-    if (!(i == last_col))
-    {
-      printf("%s", LIGHT_UP_HORIZONTAL);
-    }
-  }
-  // Bottom right corner
-  printf("%s\n", LIGHT_UP_LEFT);
-}
-
-void separator(int nb_col, const int *lengths)
-{
-  // Left T
-  printf("%s", LIGHT_VERTICAL_RIGHT);
-  int last_col = nb_col - 1;
-  for (int i = 0; i < nb_col; i++)
-  {
-    draw_h_line(lengths[i]);
-    if (!(i == last_col))
-    {
-      printf("%s", LIGHT_VERTICAL_HORIZONTAL);
-    }
-  }
-  // Right T
-  printf("%s\n", LIGHT_VERTICAL_LEFT);
-}
-
-void table_middle_line(int nb_values, const char **values, const int *lengths)
-{
-  // Left border
-  printf("%s", LIGHT_VERTICAL);
-  int last_col = nb_values - 1;
-  for (int i = 0; i < nb_values; i++)
-  {
-    padding(lengths[i] - strlen(values[i]) - 1);
-    printf("%s ", values[i]);
-    if (i != last_col)
-    {
-      printf("%s", LIGHT_VERTICAL);
-    }
-  }
-  // Right border and new line
-  printf("%s\n", LIGHT_VERTICAL);
-}
-*/
 
 void get_term_size(int *height, int *width)
 {
@@ -630,22 +582,6 @@ void title(const char *title)
       }
     }
     ENDL();
-  }
-}
-
-void draw_h_line(int length)
-{
-  for (int i = 0; i < length; i++)
-  {
-    printf("%s", LIGHT_HORIZONTAL);
-  }
-}
-
-void draw_v_line(int length)
-{
-  for (int i = 0; i < length; i++)
-  {
-    printf("%s\n", LIGHT_VERTICAL);
   }
 }
 
@@ -717,13 +653,3 @@ void header(const char *title)
   bottom_line(width);
   ENDL();
 }
-/*
-int main()
-{
-  title("Hello");
-  ENDL();
-  frame("Hello");
-  header("Hello");
-  return 0;
-}
-*/

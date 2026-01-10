@@ -2,10 +2,6 @@
 #define RUN_H_
 
 #include <core.hpp>
-#include <filesystem>
-#include <iostream>
-#include <iterator>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -28,8 +24,10 @@ private:
   bool hasCppExt(const std::vector<std::string> &files) const;
   std::string buildCommand(const std::vector<std::string> &files,
                            const std::vector<std::string> &libs, bool is_cpp,
-                           bool compile_only,
                            const std::string &output_name) const;
+  std::string buildCompileCommand(const std::vector<std::string> &files,
+                                  bool is_cpp,
+                                  const std::string &output_name) const;
 };
 
 int run_func(const std::vector<std::string> &files, bool keep, bool plus,

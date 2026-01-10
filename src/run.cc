@@ -1,3 +1,4 @@
+#include "display.h"
 #include <algorithm>
 #include <core.hpp>
 #include <cstdlib>
@@ -12,67 +13,57 @@ namespace fs = std::filesystem;
 using namespace std;
 
 Builder::Builder(const Config &conf) : conf_(conf) {}
-
 Builder::~Builder() {}
 
 int Builder::run(const vector<string> &files, const vector<string> &args,
                  bool keep, bool plus, bool compile_only) const
 {
   bool is_cpp = plus || this->hasCppExt(files);
-  string main_program_path = "";
-
-  if (files.empty())
-  {
-    throw ZCError(2, "No source files provided.");
-  }
+  string output_name = "", cmd = "";
+  int height, width;
 
   if (compile_only)
   {
-    main_program_path = fs::path(files[0]).stem().string();
+    output_name = fs::path(files[0]).replace_extension(".o").string();
+    cmd = buildCompileCommand(files, is_cpp, output_name);
   }
   else
   {
-    main_program_path = findMainFile(files);
-    if (main_program_path.empty())
-    {
-      throw ZCError(3, "No main function found in the provided files.");
-    }
+    output_name = findMainFile(files);
+    // info("Main file found: " + main_program_path);
+    debug("Main file found: " + output_name);
+    // Get library inclusions for linker
+    vector<string> needed_libs = this->getInclusions(files);
+    cmd = buildCommand(files, needed_libs, is_cpp, output_name);
   }
-  debug("Main file found: " + main_program_path);
-
-  vector<string> needed_libs = this->getInclusions(files);
-
-  string output_name =
-      compile_only ? (main_program_path + ".o") : main_program_path;
-
-  string cmd =
-      buildCommand(files, needed_libs, is_cpp, compile_only, output_name);
+  if (output_name.empty())
+    throw ZCError(3, "No main function found in the provided files.");
 
   debug("Build command: " + cmd);
+  // info("Build command: " + cmd);
+  get_term_size(&height, &width);
+  line(width);
   cout << flush;
   int compile_res = system(cmd.c_str());
 
   if (compile_res != 0)
   {
-    // TODO : add a line the width of the terminal window
+    line(width);
     throw ZCError(4, "Compilation failed.");
   }
 
   if (compile_only)
   {
+    // No execution needed here
     success("Compilation successful.");
-    cout << "Object file created: " << output_name << endl;
+    success("Object file created: " + output_name);
     return 0;
   }
 
   /*
   if (conf_.clear_before_run)
-  {
     system("clear");
-  }
   */
-  // TODO : add a line the width of the terminal window instead of this shit
-  cout << "\n===================================================" << endl;
   success("Compilation successful.");
   info("Executing program...");
 
@@ -128,9 +119,38 @@ vector<string> Builder::getInclusions(const vector<string> &files) const
   return flags;
 }
 
+string Builder::buildCompileCommand(const vector<string> &files, bool is_cpp,
+                                    const string &output_name) const
+{
+  stringstream cmd;
+  // Compiler and Standard
+  if (is_cpp)
+    cmd << conf_.cpp_compiler << " -std=" << conf_.cpp_std << " ";
+  else
+    cmd << conf_.c_compiler << " -std=" << conf_.c_std << " ";
+
+  // Global flags
+  for (const auto &flag : conf_.flags)
+    cmd << flag << " ";
+
+  // Source files
+  for (const auto &file : files)
+    cmd << escape_shell_arg(file) << " ";
+
+  // -c flag for compile_only
+  cmd << "-c ";
+
+  // Output
+  cmd << "-o " << output_name << " ";
+
+  // Color flags (gcc/g++)
+  cmd << "-fdiagnostics-color=always";
+  return cmd.str();
+}
+
 string Builder::buildCommand(const vector<string> &files,
                              const vector<string> &libs, bool is_cpp,
-                             bool compile_only, const string &output_name) const
+                             const string &output_name) const
 {
   stringstream cmd;
   // Compiler
@@ -149,12 +169,6 @@ string Builder::buildCommand(const vector<string> &files,
   for (const auto &file : files)
   {
     cmd << escape_shell_arg(file) << " ";
-  }
-
-  // Option -c
-  if (compile_only)
-  {
-    cmd << "-c ";
   }
 
   // Output
