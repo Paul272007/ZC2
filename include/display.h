@@ -2,7 +2,6 @@
 #define _DISPLAY_H_
 
 #include <stdint.h>
-#include <stdlib.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
 
@@ -185,6 +184,12 @@ void table_top_line(int nb_col, const int *lengths);
 void table_bottom_line(int nb_col, const int *lengths);
 void table_middle_line(int nb_values, const char **values, const int *lengths);
 void separator(int nb_col, const int *lengths);
+
+Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders, int8_t hasColHeaders);
+void setTableThickness(Table *ptr, int8_t rowThickness, int8_t colThickness, int8_t rowSeparatorThickness, int8_t colSeparatorThickness, int8_t rowBorderThickness, int8_t colBorderThickness);
+void setTableContent(Table *ptr, char ***content);
+void deleteTable(Table *ptr);
+void drawTable(Table *ptr);
 
 #ifdef __cplusplus
 }

@@ -1,10 +1,13 @@
 #include <ctype.h>
 #include <display.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 // Too long to write printf("\n") entirely
 #define ENDL() printf("\n")
+
+static int getBit(uint8_t flags, int pos) { return (flags >> pos) & 1; }
 
 Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders,
                 int8_t hasColHeaders)
@@ -27,15 +30,20 @@ Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders,
    * 8th bit : 1 if the column table borders are double lines, single lines otherwise
    */
   // clang-format on
-  ptr->flags = 0b00000000;
+  // ptr->flags = 0b00000000;
+  ptr->flags = 0;
   ptr->n_cols = n_cols;
   ptr->n_rows = n_rows;
+  ptr->current_line = 0;
   // Allocate array the width of each column
   ptr->max_widths = malloc(ptr->n_cols * sizeof(int));
   // Allocate lines of content
   ptr->content = malloc(ptr->n_rows * sizeof(char **));
-  ptr->chars = malloc(sizeof(TableChars));
   ptr->lengths = malloc(ptr->n_rows * sizeof(int *));
+  ptr->chars = malloc(sizeof(TableChars));
+  if (!ptr->content || !ptr->lengths || !ptr->chars)
+    return NULL;
+  memset(ptr->chars, 0, sizeof(TableChars));
   // Allocate columns
   for (int i = 0; i < n_rows; i++)
   {
@@ -48,7 +56,6 @@ Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders,
       ptr->content[i][j] = NULL;
     }
   }
-  ptr->current_line = 0;
   switch (hasRowHeaders)
   {
   case 0:
@@ -119,29 +126,42 @@ void setTableContent(Table *ptr, char ***content)
         free(ptr->content[i][j]);
       if (content[i][j])
         ptr->content[i][j] = strdup(content[i][j]);
+      else
+        ptr->content[i][j] = strdup("");
     }
   }
 }
 
-void freeTableChars(TableChars *ptr)
+static void safeFree(char *p)
 {
-  free(ptr->borderCol);
-  free(ptr->borderRow);
-  free(ptr->bottomLeftCorner);
-  free(ptr->bottomRightCorner);
-  free(ptr->topLeftCorner);
-  free(ptr->topRightCorner);
-  free(ptr->leftT);
-  free(ptr->leftSepT);
-  free(ptr->rightT);
-  free(ptr->rightSepT);
-  free(ptr->topT);
-  free(ptr->topSepT);
-  free(ptr->bottomT);
-  free(ptr->bottomSepT);
-  free(ptr->col);
-  free(ptr->cross);
-  free(ptr->row);
+  if (p)
+    free(p);
+}
+
+static void freeTableChars(TableChars *ptr)
+{
+  if (!ptr)
+    return;
+  safeFree(ptr->borderCol);
+  safeFree(ptr->borderRow);
+  safeFree(ptr->bottomLeftCorner);
+  safeFree(ptr->bottomRightCorner);
+  safeFree(ptr->topLeftCorner);
+  safeFree(ptr->topRightCorner);
+  safeFree(ptr->leftT);
+  safeFree(ptr->leftSepT);
+  safeFree(ptr->rightT);
+  safeFree(ptr->rightSepT);
+  safeFree(ptr->topT);
+  safeFree(ptr->topSepT);
+  safeFree(ptr->bottomT);
+  safeFree(ptr->bottomSepT);
+  safeFree(ptr->col);
+  safeFree(ptr->cross);
+  safeFree(ptr->sepCross);
+  safeFree(ptr->sepRow);
+  safeFree(ptr->sepCol);
+  safeFree(ptr->row);
   free(ptr);
 }
 
@@ -150,18 +170,19 @@ void deleteTable(Table *ptr)
   if (!ptr)
     return;
   free(ptr->max_widths);
-  if (ptr->chars)
-    freeTableChars(ptr->chars);
+  freeTableChars(ptr->chars);
   for (int i = 0; i < ptr->n_rows; i++)
   {
     for (int j = 0; j < ptr->n_cols; j++)
     {
-      free(ptr->content[i][j]);
+      if (ptr->content[i][j])
+        free(ptr->content[i][j]);
     }
     free(ptr->lengths[i]);
     free(ptr->content[i]);
   }
   free(ptr->content);
+  free(ptr->lengths);
   free(ptr);
 }
 
@@ -175,12 +196,10 @@ static void getMaxWidths(Table *ptr)
     int max_col = 0;
     for (int i = 0; i < ptr->n_rows; i++)
     {
-      int length = strlen(ptr->content[i][j]);
+      int length = (ptr->content[i][j]) ? strlen(ptr->content[i][j]) : 0;
       ptr->lengths[i][j] = length;
       if (length > max_col)
-      {
         max_col = length;
-      }
     }
     ptr->max_widths[j] = max_col + 2;
   }
@@ -188,17 +207,25 @@ static void getMaxWidths(Table *ptr)
 
 static void getTableChars(Table *ptr)
 {
-  int8_t hasRowHeaders = (ptr->flags << 0) & 1;
-  int8_t hasColHeaders = (ptr->flags << 1) & 1;
-  int8_t rowThickness = (ptr->flags << 2) & 1;
-  int8_t colThickness = (ptr->flags << 3) & 1;
-  int8_t rowSeparatorThickness = (ptr->flags << 4) & 1;
-  int8_t colSeparatorThickness = (ptr->flags << 5) & 1;
-  int8_t rowBorderThickness = (ptr->flags << 6) & 1;
-  int8_t colBorderThickness = (ptr->flags << 7) & 1;
-  char *topLeftCorner, *topRightCorner, *topT, *bottomT, *topSepT, *bottomSepT,
-      *row, *col, *rowBorder, *colBorder, *bottomLeftCorner, *bottomRightCorner,
-      *leftT, *leftSepT, *rightT, *rightSepT, *cross, *sepCross;
+  int8_t hasRowHeaders = getBit(ptr->flags, 0);
+  int8_t hasColHeaders = getBit(ptr->flags, 1);
+  int8_t rowThickness = getBit(ptr->flags, 2);
+  int8_t colThickness = getBit(ptr->flags, 3);
+  int8_t rowSeparatorThickness = getBit(ptr->flags, 4);
+  int8_t colSeparatorThickness = getBit(ptr->flags, 5);
+  int8_t rowBorderThickness = getBit(ptr->flags, 6);
+  int8_t colBorderThickness = getBit(ptr->flags, 7);
+  // Declare variables;
+  char *topLeftCorner = " ", *topRightCorner = " ", *topT = " ", *bottomT = " ";
+  char *topSepT = " ", *bottomSepT = " ", *row = "-", *col = "|", *sepRow = "-",
+       *sepCol = "-";
+  char *rowBorder = "-", *colBorder = "|", *bottomLeftCorner = " ",
+       *bottomRightCorner = " ";
+  char *leftT = " ", *leftSepT = " ", *rightT = " ", *rightSepT = " ";
+  char *cross = "+", *sepCross = "+";
+  // Initialise characters
+  row = (rowThickness) ? DOUBLE_HORIZONTAL : LIGHT_HORIZONTAL;
+  col = (colThickness) ? DOUBLE_VERTICAL : LIGHT_VERTICAL;
   if (rowBorderThickness)
   {
     rowBorder = DOUBLE_HORIZONTAL;
@@ -216,29 +243,18 @@ static void getTableChars(Table *ptr)
       bottomLeftCorner = UP_SINGLE_RIGHT_DOUBLE;
       bottomRightCorner = UP_SINGLE_LEFT_DOUBLE;
     }
-    if (colThickness)
-    {
-      topT = DOUBLE_DOWN_HORIZONTAL;
-      bottomT = DOUBLE_UP_HORIZONTAL;
-    }
-    else
-    {
-      topT = DOWN_SINGLE_HORIZONTAL_DOUBLE;
-      bottomT = UP_SINGLE_HORIZONTAL_DOUBLE;
-    }
-    if (colSeparatorThickness)
-    {
-      topSepT = DOUBLE_DOWN_HORIZONTAL;
-      bottomSepT = DOUBLE_UP_HORIZONTAL;
-    }
-    else
-    {
-      topSepT = DOWN_SINGLE_HORIZONTAL_DOUBLE;
-      bottomSepT = UP_SINGLE_HORIZONTAL_DOUBLE;
-    }
+    // ... (Logique T haut/bas conservée mais simplifiée pour la lisibilité)
+    topT =
+        (colThickness) ? DOUBLE_DOWN_HORIZONTAL : DOWN_SINGLE_HORIZONTAL_DOUBLE;
+    bottomT =
+        (colThickness) ? DOUBLE_UP_HORIZONTAL : UP_SINGLE_HORIZONTAL_DOUBLE;
+    topSepT = (colSeparatorThickness) ? DOUBLE_DOWN_HORIZONTAL
+                                      : DOWN_SINGLE_HORIZONTAL_DOUBLE;
+    bottomSepT = (colSeparatorThickness) ? DOUBLE_UP_HORIZONTAL
+                                         : UP_SINGLE_HORIZONTAL_DOUBLE;
   }
-  else // !rowThickness
-  {
+  else
+  { // !rowBorderThickness
     rowBorder = LIGHT_HORIZONTAL;
     if (colBorderThickness)
     {
@@ -254,236 +270,223 @@ static void getTableChars(Table *ptr)
       bottomLeftCorner = LIGHT_UP_RIGHT;
       bottomRightCorner = LIGHT_UP_LEFT;
     }
-    if (colThickness)
-    {
-      topT = DOWN_DOUBLE_HORIZONTAL_SINGLE;
-      bottomT = UP_DOUBLE_HORIZONTAL_SINGLE;
-    }
-    else
-    {
-      topT = LIGHT_DOWN_HORIZONTAL;
-      topT = LIGHT_UP_HORIZONTAL;
-    }
-    if (colSeparatorThickness)
-    {
-      topSepT = DOWN_DOUBLE_HORIZONTAL_SINGLE;
-      bottomSepT = UP_DOUBLE_HORIZONTAL_SINGLE;
-    }
-    else
-    {
-      topSepT = LIGHT_DOWN_HORIZONTAL;
-      bottomSepT = LIGHT_UP_HORIZONTAL;
-    }
+    topT =
+        (colThickness) ? DOWN_DOUBLE_HORIZONTAL_SINGLE : LIGHT_DOWN_HORIZONTAL;
+    bottomT =
+        (colThickness) ? UP_DOUBLE_HORIZONTAL_SINGLE : LIGHT_UP_HORIZONTAL;
+    topSepT = (colSeparatorThickness) ? DOWN_DOUBLE_HORIZONTAL_SINGLE
+                                      : LIGHT_DOWN_HORIZONTAL;
+    bottomSepT = (colSeparatorThickness) ? UP_DOUBLE_HORIZONTAL_SINGLE
+                                         : LIGHT_UP_HORIZONTAL;
   }
-  // Values depending on the colum
+
   if (colBorderThickness)
   {
     colBorder = DOUBLE_VERTICAL;
-    if (rowSeparatorThickness)
-    {
-      leftT = DOUBLE_VERTICAL_RIGHT;
-      rightT = DOUBLE_VERTICAL_LEFT;
-    }
-    else
-    {
-      leftT = VERTICAL_DOUBLE_RIGHT_SINGLE;
-      rightT = VERTICAL_DOUBLE_LEFT_SINGLE;
-    }
+    leftT =
+        (rowThickness) ? DOUBLE_VERTICAL_RIGHT : VERTICAL_DOUBLE_RIGHT_SINGLE;
+    leftSepT = (rowSeparatorThickness) ? DOUBLE_VERTICAL_RIGHT
+                                       : VERTICAL_DOUBLE_RIGHT_SINGLE;
+    rightT =
+        (rowThickness) ? DOUBLE_VERTICAL_LEFT : VERTICAL_DOUBLE_LEFT_SINGLE;
+    rightSepT = (rowSeparatorThickness) ? DOUBLE_VERTICAL_LEFT
+                                        : VERTICAL_DOUBLE_LEFT_SINGLE;
   }
-  else // !colBorderThickness
+  else
   {
     colBorder = LIGHT_VERTICAL;
-    if (rowSeparatorThickness)
-    {
-      leftT = VERTICAL_SINGLE_RIGHT_DOUBLE;
-      rightT = VERTICAL_SINGLE_LEFT_DOUBLE;
-    }
-    else
-    {
-      leftT = LIGHT_VERTICAL_RIGHT;
-      rightT = LIGHT_VERTICAL_LEFT;
-    }
+    leftT =
+        (rowThickness) ? VERTICAL_SINGLE_RIGHT_DOUBLE : LIGHT_VERTICAL_RIGHT;
+    leftSepT = (rowSeparatorThickness) ? VERTICAL_SINGLE_RIGHT_DOUBLE
+                                       : LIGHT_VERTICAL_RIGHT;
+    rightT = (rowThickness) ? VERTICAL_SINGLE_LEFT_DOUBLE : LIGHT_VERTICAL_LEFT;
+    rightSepT = (rowSeparatorThickness) ? VERTICAL_SINGLE_LEFT_DOUBLE
+                                        : LIGHT_VERTICAL_LEFT;
   }
-  // Values depending on the row separator thickness
-  cross = (rowSeparatorThickness)
-              ? ((colThickness) ? DOUBLE_VERTICAL_HORIZONTAL
-                                : VERTICAL_SINGLE_HORIZONTAL_DOUBLE)
-              : ((colThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
-                                : LIGHT_VERTICAL_HORIZONTAL);
-  sepCross = (rowSeparatorThickness)
-                 ? ((colSeparatorThickness) ? DOUBLE_VERTICAL_HORIZONTAL
-                                            : VERTICAL_SINGLE_HORIZONTAL_DOUBLE)
-                 : ((colSeparatorThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
-                                            : LIGHT_VERTICAL_HORIZONTAL);
+
+  // Handle crosses
+  if (rowSeparatorThickness)
+  {
+    sepRow = DOUBLE_HORIZONTAL;
+    cross = (colThickness) ? DOUBLE_VERTICAL_HORIZONTAL
+                           : VERTICAL_SINGLE_HORIZONTAL_DOUBLE;
+    sepCross = (colSeparatorThickness) ? DOUBLE_VERTICAL_HORIZONTAL
+                                       : VERTICAL_SINGLE_HORIZONTAL_DOUBLE;
+  }
+  else
+  {
+    sepRow = LIGHT_HORIZONTAL;
+    cross = (colThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
+                           : LIGHT_VERTICAL_HORIZONTAL;
+    sepCross = (colSeparatorThickness) ? VERTICAL_DOUBLE_HORIZONTAL_SINGLE
+                                       : LIGHT_VERTICAL_HORIZONTAL;
+  }
+  sepCol = (colSeparatorThickness) ? DOUBLE_VERTICAL : LIGHT_VERTICAL;
+  // Fill char struct
+  if (ptr->chars->topLeftCorner)
+    freeTableChars(ptr->chars); // Nettoyage si réappelé
   ptr->chars->topLeftCorner = strdup(topLeftCorner);
-  ptr->chars->topT = strdup(topT);
-  ptr->chars->topSepT = strdup(topSepT);
   ptr->chars->topRightCorner = strdup(topRightCorner);
+  ptr->chars->bottomLeftCorner = strdup(bottomLeftCorner);
+  ptr->chars->bottomRightCorner = strdup(bottomRightCorner);
+  ptr->chars->leftT = strdup(leftT);
+  ptr->chars->rightT = strdup(rightT);
+  ptr->chars->leftSepT = strdup(leftSepT);
+  ptr->chars->rightSepT = strdup(rightSepT);
+  ptr->chars->topT = strdup(topT);
+  ptr->chars->bottomT = strdup(bottomT);
+  ptr->chars->topSepT = strdup(topSepT);
+  ptr->chars->bottomSepT = strdup(bottomSepT);
+  ptr->chars->row = strdup(row);
+  ptr->chars->col = strdup(col);
+  ptr->chars->sepRow = strdup(sepRow);
+  ptr->chars->sepCol = strdup(sepCol);
+  ptr->chars->borderRow = strdup(rowBorder);
+  ptr->chars->borderCol = strdup(colBorder);
+  ptr->chars->cross = strdup(cross);
+  ptr->chars->sepCross = strdup(sepCross);
 }
 
-void drawLine(int length, char *line)
+static void drawLine(int length, char *line)
 {
   for (int i = 0; i < length; i++)
-  {
     printf("%s", line);
-  }
 }
 
 static void tableTopLine(Table *ptr)
 {
-  // Top left corner
-  int8_t hasRowHeaders = (ptr->flags << 0) & 1;
-  int8_t hasColHeaders = (ptr->flags << 1) & 1;
-  // Top left corner
+  int8_t hasRowHeaders = getBit(ptr->flags, 0);
+
   printf("%s", ptr->chars->topLeftCorner);
   drawLine(ptr->max_widths[0], ptr->chars->borderRow);
-  if (hasColHeaders)
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      printf("%s", ptr->chars->topSepT);
-    }
-  }
-  else if (hasRowHeaders)
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      if (i == 1)
-        printf("%s", ptr->chars->topSepT);
-      else
-        printf("%s", ptr->chars->topT);
-    }
-  }
-  else
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      printf("%s", ptr->chars->topT);
-    }
-  }
-  // Top right corner
-  printf("%s", ptr->chars->topRightCorner);
-}
-
-void tableBottomLine(Table *ptr)
-{
-  int8_t hasRowHeaders = (ptr->flags << 0) & 1;
-  // Bottom left corner
-  printf("%s", ptr->chars->bottomLeftCorner);
-  drawLine(ptr->max_widths[0], ptr->chars->borderRow);
-  if (hasRowHeaders)
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      if (i == 1)
-        printf("%s", ptr->chars->bottomSepT);
-      else
-        printf("%s", ptr->chars->bottomT);
-    }
-  }
-  else
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      printf("%s", ptr->chars->bottomT);
-    }
-  }
-  // Bottom right corner
-  printf("%s", ptr->chars->bottomRightCorner);
-}
-
-void tableColumnHeaderSeparator(Table *ptr)
-{
-  int8_t hasRowHeaders = (ptr->flags << 0) & 1;
-  // Left T
-  printf("%s", ptr->chars->leftSepT);
-  drawLine(ptr->max_widths[0], ptr->chars->sepRow);
-  if (hasRowHeaders)
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      if (i == 1)
-        printf("%s", ptr->chars->sepCross);
-      else
-        printf("%s", ptr->chars->cross);
-    }
-  }
-  else
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      printf("%s", ptr->chars->cross);
-    }
-  }
-  // Right T
-  printf("%s", ptr->chars->rightSepT);
-}
-
-void tableSeparator(Table *ptr)
-{
-  int8_t hasRowHeaders = (ptr->flags << 0) & 1;
-  // Left T
-  printf("%s", ptr->chars->leftT);
-  drawLine(ptr->max_widths[0], ptr->chars->row);
-  if (hasRowHeaders)
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      if (i == 1)
-        printf("%s", ptr->chars->sepCross);
-      else
-        printf("%s", ptr->chars->cross);
-    }
-  }
-  else
-  {
-    for (int i = 1; i < ptr->n_cols; i++)
-    {
-      printf("%s", ptr->chars->cross);
-    }
-  }
-  // Right T
-  printf("%s", ptr->chars->rightT);
-}
-
-void tableMiddleLine(Table *ptr)
-{
-  // Left border
-  printf("%s", ptr->chars->borderCol);
-
-  padding(ptr->max_widths[0] - ptr->lengths[ptr->current_line][0] - 1);
-  printf("%s ", ptr->content[ptr->current_line][0]);
 
   for (int i = 1; i < ptr->n_cols; i++)
   {
-    // - 1 for the space after the word
-    printf("%s", ptr->chars->col);
-    padding(ptr->max_widths[i] - ptr->lengths[ptr->current_line][i] - 1);
-    printf("%s ", ptr->content[ptr->current_line][i]);
+    // 1. D'abord le séparateur
+    if (hasRowHeaders && i == 1)
+      printf("%s", ptr->chars->topSepT);
+    else
+      printf("%s", ptr->chars->topT);
+
+    // 2. Ensuite la ligne horizontale pour cette colonne
+    drawLine(ptr->max_widths[i], ptr->chars->borderRow);
   }
-  // Right border and new line
+  printf("%s\n", ptr->chars->topRightCorner);
+}
+
+static void tableBottomLine(Table *ptr)
+{
+  int8_t hasRowHeaders = getBit(ptr->flags, 0);
+
+  printf("%s", ptr->chars->bottomLeftCorner);
+  drawLine(ptr->max_widths[0], ptr->chars->borderRow);
+
+  for (int i = 1; i < ptr->n_cols; i++)
+  {
+    if (hasRowHeaders && i == 1)
+      printf("%s", ptr->chars->bottomSepT);
+    else
+      printf("%s", ptr->chars->bottomT);
+
+    drawLine(ptr->max_widths[i], ptr->chars->borderRow);
+  }
+  printf("%s\n", ptr->chars->bottomRightCorner);
+}
+
+static void tableColumnHeaderSeparator(Table *ptr)
+{
+  int8_t hasRowHeaders = getBit(ptr->flags, 0);
+
+  printf("%s", ptr->chars->leftSepT);
+  drawLine(ptr->max_widths[0], ptr->chars->sepRow);
+
+  for (int i = 1; i < ptr->n_cols; i++)
+  {
+    if (hasRowHeaders && i == 1)
+      printf("%s", ptr->chars->sepCross);
+    else
+      printf("%s", ptr->chars->cross);
+
+    drawLine(ptr->max_widths[i], ptr->chars->sepRow);
+  }
+  printf("%s\n", ptr->chars->rightSepT);
+}
+
+static void tableSeparator(Table *ptr)
+{
+  int8_t hasRowHeaders = getBit(ptr->flags, 0);
+
+  printf("%s", ptr->chars->leftT);
+  drawLine(ptr->max_widths[0], ptr->chars->row);
+
+  for (int i = 1; i < ptr->n_cols; i++)
+  {
+    if (hasRowHeaders && i == 1)
+      printf("%s", ptr->chars->sepCross);
+    else
+      printf("%s", ptr->chars->cross);
+
+    drawLine(ptr->max_widths[i], ptr->chars->row);
+  }
+  printf("%s\n", ptr->chars->rightT);
+}
+
+static void tableMiddleLine(Table *ptr)
+{
+  // Bordure gauche
+  printf("%s", ptr->chars->borderCol);
+
+  // Colonne 0
+  padding(ptr->max_widths[0] - ptr->lengths[ptr->current_line][0] - 1);
+  printf("%s ", ptr->content[ptr->current_line][0]
+                    ? ptr->content[ptr->current_line][0]
+                    : "");
+
+  // Autres colonnes
+  for (int i = 1; i < ptr->n_cols; i++)
+  {
+    printf("%s", ptr->chars->col); // Séparateur vertical interne
+    padding(ptr->max_widths[i] - ptr->lengths[ptr->current_line][i] - 1);
+    printf("%s ", ptr->content[ptr->current_line][i]
+                      ? ptr->content[ptr->current_line][i]
+                      : "");
+  }
+
   ptr->current_line++;
+  // Bordure droite
   printf("%s\n", ptr->chars->borderCol);
 }
 
 void drawTable(Table *ptr)
 {
-  int8_t hasColHeaders = (ptr->flags << 1) & 1;
+  if (!ptr)
+    return;
+  int8_t hasColHeaders = getBit(ptr->flags, 1);
+
   getMaxWidths(ptr);
   getTableChars(ptr);
-  table_top_line(ptr->n_cols, ptr->max_widths);
+
+  // Correction des noms de fonctions (snake_case -> camelCase)
+  tableTopLine(ptr);
+
   if (hasColHeaders)
   {
     tableMiddleLine(ptr);
     tableColumnHeaderSeparator(ptr);
   }
-  tableMiddleLine(ptr);
-  while (ptr->current_line < ptr->n_rows)
+
+  // S'il reste des lignes à dessiner
+  if (ptr->current_line < ptr->n_rows)
   {
-    tableSeparator(ptr);
     tableMiddleLine(ptr);
+    while (ptr->current_line < ptr->n_rows)
+    {
+      tableSeparator(ptr);
+      tableMiddleLine(ptr);
+    }
   }
-  table_bottom_line(ptr->n_cols, ptr->max_widths);
+
+  tableBottomLine(ptr);
 }
 
 const char UPPER[26][FONT_HEIGHT][FONT_WIDTH] = {
