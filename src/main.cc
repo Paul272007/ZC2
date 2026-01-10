@@ -41,7 +41,7 @@ CLI::Validator FileExistAndExt(vector<string> exts)
 int main(int argc, char *argv[])
 {
   CLI::App app{"ZC compiler, the easiest way to compile, execute and test "
-               "C/C++ programs using GCC"};
+               "C/C++ programs"};
   argv = app.ensure_utf8(argv);
   app.set_version_flag("--version,-v", "ZC v0.0.1 (dev)");
 
