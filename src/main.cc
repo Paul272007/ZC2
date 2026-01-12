@@ -1,42 +1,15 @@
-#include <CLI11.hpp>
-#include <core.hpp>
-#include <filesystem>
-#include <header.hpp>
 #include <iostream>
-#include <lib.hpp>
-#include <run.hpp>
+#include <memory>
 #include <string>
 #include <vector>
-#include <zcerror.hpp>
 
-namespace fs = std::filesystem;
+#include <CLI11.hpp>
+#include <Header.hh>
+#include <Run.hh>
+#include <ZCError.hh>
+// namespace fs = std::filesystem;
 
 using namespace std;
-
-// Valideur d'extension
-struct CheckExt : public CLI::Validator
-{
-  CheckExt(vector<string> exts) : Validator("ExtensionValidator")
-  {
-    func_ = [exts](string &filename)
-    {
-      string actual_ext = fs::path(filename).extension().string();
-      for (const auto &ext : exts)
-      {
-        if (actual_ext == ext)
-          return string(); // OK
-      }
-      return "File must have one of these extensions: " +
-             CLI::detail::join(exts);
-    };
-  }
-};
-
-// Valideur d'existence ET d'extension
-CLI::Validator FileExistAndExt(vector<string> exts)
-{
-  return CLI::ExistingFile & CheckExt(exts);
-}
 
 int main(int argc, char *argv[])
 {
@@ -52,6 +25,8 @@ int main(int argc, char *argv[])
   bool run_keep = false;
   bool run_plus = false;
   bool run_c = false;
+  bool run_S = false;
+  bool run_E = false;
   vector<string> run_args;
   // lib
   string lib_header, lib_archive, lib_remove_target;
@@ -62,27 +37,28 @@ int main(int argc, char *argv[])
   string head_output, head_sync_h, head_sync_c, head_init_target;
   bool head_force = false;
 
-  auto exist_cs = FileExistAndExt({".c", ".o", ".cpp", ".cxx", ".cc"});
-  auto exist_h = FileExistAndExt({".h", ".hpp"});
-  auto exist_a = FileExistAndExt({".a"});
-  auto exist_c = FileExistAndExt({".c"});
-  auto valid_h = CheckExt({".h", ".hpp"});
+  unique_ptr<Command> current_command(nullptr);
 
   // ========================= RUN subcommand =========================
   auto sub_run =
       app.add_subcommand("run", "Simply compile and run C/C++ file.");
   sub_run
       ->add_option("files", run_files, "The files to be compiled and executed")
-      ->check(exist_cs)
       ->required();
   sub_run->add_flag("--keep,-k", run_keep,
                     "Do not delete the executable after being executed.");
   sub_run->add_flag("--plus,-p", run_plus, "Force compilation as C++");
   sub_run->add_flag("-c", run_c, "Compile and assemble, but do not link.");
+  sub_run->add_flag("-S", run_S, "Compile only");
+  sub_run->add_flag("-E", run_E, "Preprocess only");
   sub_run->add_option("--args,-a", run_args,
                       "Arguments to be passed to the program.");
   sub_run->callback(
-      [&]() { run_func(run_files, run_keep, run_plus, run_c, run_args); });
+      [&]()
+      {
+        current_command = make_unique<Run>(run_files, run_args, run_keep,
+                                           run_plus, run_E, run_S, run_c);
+      });
 
   // ========================= LIB subcommand =========================
   auto sub_lib = app.add_subcommand("lib", "Actions on libraries.");
@@ -96,10 +72,8 @@ int main(int argc, char *argv[])
   auto sub_lib_install =
       sub_lib->add_subcommand("install", "Install a new library");
   sub_lib_install->add_option("headerfile", lib_header, "The header file (.h)")
-      ->check(exist_h)
       ->required();
   sub_lib_install->add_option("libfile", lib_archive, "The archive file (.a)")
-      ->check(exist_a)
       ->required();
   sub_lib_install->add_flag("--force,-f", lib_force, "Force writing");
   sub_lib_install->callback(
@@ -110,7 +84,6 @@ int main(int argc, char *argv[])
       sub_lib->add_subcommand("create", "Create and install a static library");
   sub_lib_create
       ->add_option("files", lib_create_files, "The source code files (.c)")
-      ->check(exist_c)
       ->required();
   sub_lib_create->add_flag("--force,-f", lib_force, "Force writing");
   sub_lib_create->callback([&]() { lib_create(lib_create_files, lib_force); });
@@ -119,7 +92,6 @@ int main(int argc, char *argv[])
   auto sub_lib_remove = sub_lib->add_subcommand("remove", "Remove a library");
   sub_lib_remove
       ->add_option("library", lib_remove_target, "The library header to remove")
-      ->check(valid_h)
       ->required();
   sub_lib_remove->callback([&]() { lib_remove(lib_remove_target); });
 
@@ -131,7 +103,6 @@ int main(int argc, char *argv[])
   auto sub_head_create =
       sub_header->add_subcommand("create", "Generate a new header file");
   sub_head_create->add_option("files", head_create_files, "The C files")
-      ->check(exist_c)
       ->required();
   sub_head_create->add_flag("--force,-f", head_force);
   sub_head_create->add_option("--output,-o", head_output,
@@ -142,18 +113,14 @@ int main(int argc, char *argv[])
   // header sync
   auto sub_head_sync =
       sub_header->add_subcommand("sync", "Modify existing header file");
-  sub_head_sync->add_option("headerfile", head_sync_h)
-      ->check(exist_h)
-      ->required();
+  sub_head_sync->add_option("headerfile", head_sync_h)->required();
   sub_head_sync->add_option("cfile", head_sync_c)->check(exist_c)->required();
   sub_head_sync->callback(
       [&]() { header_sync(head_sync_h, head_sync_c, head_output); });
 
   // header init
   auto sub_head_init = sub_header->add_subcommand("init", "Init a header file");
-  sub_head_init->add_option("headerfile", head_init_target)
-      ->check(valid_h)
-      ->required();
+  sub_head_init->add_option("headerfile", head_init_target)->required();
   sub_head_init->add_flag("--force,-f", head_force);
   sub_head_init->callback(
       [&]() { header_init(head_init_target, head_force, head_output); });
@@ -161,18 +128,23 @@ int main(int argc, char *argv[])
   // ========================= Parsing =========================
   try
   {
-    CLI11_PARSE(app, argc, argv);
+    app.parse(argc, argv);
+  }
+  catch (const CLI::ParseError &e)
+  {
+    return app.exit(e);
+  }
+  try
+  {
+    if (current_command)
+      current_command->execute();
   }
   catch (const ZCError &e)
   {
     if (e.code() != 6)
-    {
       cerr << e << endl;
-    }
     else
-    {
       cerr << "Operation canceled." << endl;
-    }
     return e.code();
   }
   return 0;
