@@ -1,4 +1,4 @@
-#include <zcerror.hpp>
+#include <ZCError.hh>
 
 using namespace std;
 
@@ -12,10 +12,10 @@ void ZCError::display(ostream &f) const
     << m_message;
 }
 
-ostream &operator<<(ostream &f, const ZCError &e)
+ostream &operator<<(ostream &s, const ZCError &e)
 {
-  e.display(f);
-  return f;
+  e.display(s);
+  return s;
 }
 
 int ZCError::code() const { return m_code; }

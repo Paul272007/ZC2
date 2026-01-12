@@ -1,9 +1,10 @@
-#include <core.hpp>
 #include <cstdlib>
-#include <display.h>
 #include <iostream>
-#include <lib.hpp>
 #include <string>
+
+#include <Lib.hh>
+#include <display.h>
+#include <helpers.hh>
 
 using namespace std;
 

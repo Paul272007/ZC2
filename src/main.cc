@@ -1,3 +1,4 @@
+#include <exception>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -5,6 +6,7 @@
 
 #include <CLI11.hpp>
 #include <Header.hh>
+#include <Lib.hh>
 #include <Run.hh>
 #include <ZCError.hh>
 // namespace fs = std::filesystem;
@@ -66,7 +68,7 @@ int main(int argc, char *argv[])
 
   // lib list
   sub_lib->add_subcommand("list", "List all installed libraries")
-      ->callback([&]() { lib_list(); });
+      ->callback([&]() { current_command = make_unique<Lib>(); });
 
   // lib install
   auto sub_lib_install =
@@ -76,8 +78,7 @@ int main(int argc, char *argv[])
   sub_lib_install->add_option("libfile", lib_archive, "The archive file (.a)")
       ->required();
   sub_lib_install->add_flag("--force,-f", lib_force, "Force writing");
-  sub_lib_install->callback(
-      [&]() { lib_install(lib_header, lib_archive, lib_force); });
+  sub_lib_install->callback([&]() { current_command = make_unique<Lib>(); });
 
   // lib create
   auto sub_lib_create =
@@ -86,14 +87,14 @@ int main(int argc, char *argv[])
       ->add_option("files", lib_create_files, "The source code files (.c)")
       ->required();
   sub_lib_create->add_flag("--force,-f", lib_force, "Force writing");
-  sub_lib_create->callback([&]() { lib_create(lib_create_files, lib_force); });
+  sub_lib_create->callback([&]() { current_command = make_unique<Lib>(); });
 
   // lib remove
   auto sub_lib_remove = sub_lib->add_subcommand("remove", "Remove a library");
   sub_lib_remove
       ->add_option("library", lib_remove_target, "The library header to remove")
       ->required();
-  sub_lib_remove->callback([&]() { lib_remove(lib_remove_target); });
+  sub_lib_remove->callback([&]() { current_command = make_unique<Lib>(); });
 
   // ========================= HEADER subcommand =========================
   auto sub_header = app.add_subcommand("header", "Actions on header files.");
@@ -107,23 +108,20 @@ int main(int argc, char *argv[])
   sub_head_create->add_flag("--force,-f", head_force);
   sub_head_create->add_option("--output,-o", head_output,
                               "Specify output file");
-  sub_head_create->callback(
-      [&]() { header_create(head_create_files, head_force, head_output); });
+  sub_head_create->callback([&]() { current_command = make_unique<Header>(); });
 
   // header sync
   auto sub_head_sync =
       sub_header->add_subcommand("sync", "Modify existing header file");
   sub_head_sync->add_option("headerfile", head_sync_h)->required();
-  sub_head_sync->add_option("cfile", head_sync_c)->check(exist_c)->required();
-  sub_head_sync->callback(
-      [&]() { header_sync(head_sync_h, head_sync_c, head_output); });
+  sub_head_sync->add_option("cfile", head_sync_c)->required();
+  sub_head_sync->callback([&]() { current_command = make_unique<Header>(); });
 
   // header init
   auto sub_head_init = sub_header->add_subcommand("init", "Init a header file");
   sub_head_init->add_option("headerfile", head_init_target)->required();
   sub_head_init->add_flag("--force,-f", head_force);
-  sub_head_init->callback(
-      [&]() { header_init(head_init_target, head_force, head_output); });
+  sub_head_init->callback([&]() { current_command = make_unique<Header>(); });
 
   // ========================= Parsing =========================
   try
@@ -137,7 +135,7 @@ int main(int argc, char *argv[])
   try
   {
     if (current_command)
-      current_command->execute();
+      return current_command->execute();
   }
   catch (const ZCError &e)
   {
@@ -147,5 +145,9 @@ int main(int argc, char *argv[])
       cerr << "Operation canceled." << endl;
     return e.code();
   }
-  return 0;
+  catch (const exception &e)
+  {
+    cerr << "Unexpected error: " << e.what();
+    return -1;
+  }
 }

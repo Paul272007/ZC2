@@ -7,6 +7,7 @@ class Header : public Command
 {
 public:
   Header();
+  virtual int execute() override;
   virtual ~Header();
 };
 
