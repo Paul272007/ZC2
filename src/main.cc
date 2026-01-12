@@ -42,19 +42,18 @@ int main(int argc, char *argv[])
   unique_ptr<Command> current_command(nullptr);
 
   // ========================= RUN subcommand =========================
-  auto sub_run =
-      app.add_subcommand("run", "Simply compile and run C/C++ file.");
+  auto sub_run = app.add_subcommand("run", "Simply compile and run C/C++ file");
   sub_run
       ->add_option("files", run_files, "The files to be compiled and executed")
       ->required();
   sub_run->add_flag("--keep,-k", run_keep,
-                    "Do not delete the executable after being executed.");
+                    "Do not delete the executable after being executed");
   sub_run->add_flag("--plus,-p", run_plus, "Force compilation as C++");
-  sub_run->add_flag("-c", run_c, "Compile and assemble, but do not link.");
+  sub_run->add_flag("-c", run_c, "Compile and assemble, but do not link");
   sub_run->add_flag("-S", run_S, "Compile only");
   sub_run->add_flag("-E", run_E, "Preprocess only");
   sub_run->add_option("--args,-a", run_args,
-                      "Arguments to be passed to the program.");
+                      "Arguments to be passed to the program");
   sub_run->callback(
       [&]()
       {

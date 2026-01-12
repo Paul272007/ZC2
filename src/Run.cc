@@ -1,7 +1,5 @@
-#include <cstdlib>
 #include <filesystem>
 #include <sstream>
-#include <vector>
 
 #include <Config.hh>
 #include <File.hh>
@@ -23,6 +21,8 @@ Run::Run(const std::vector<std::string> &files,
     plus_ = true;
   mode_ = getMode(preprocess, compile, assemble);
 }
+
+Run::~Run() {}
 
 int Run::execute()
 {
@@ -166,7 +166,7 @@ void Run::buildCommand(string &buildCmd, const string &output_name) const
     cmd << file << " ";
 
   // Output
-  cmd << "-o " << output_name << " ";
+  cmd << "-o " << escape_shell_arg(output_name) << " ";
 
   // Mode and libraries for normal mode
   switch (mode_)
