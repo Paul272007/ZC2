@@ -2,15 +2,17 @@
 #define HELPERS_H_
 
 #include <string>
+#include <vector>
 
-using namespace std;
 // using json = nlohmann::json;
 
 /**
  * @brief Ask the user for a yes/no confirmation.
+ *
  * @return true if the user answered yes, false otherwise.
+ * Return valued should not be discarded.
  */
-[[nodiscard]] bool ask();
+[[nodiscard]] bool ask(const std::string &question);
 
 /**
  * @brief Format and print a success message.
@@ -41,5 +43,7 @@ std::string upper(std::string str);
  * @brief Escapes a string to be safely used as a shell argument.
  */
 std::string escape_shell_arg(const std::string &arg);
+
+std::vector<std::string> split(const std::string &s, char delimiter);
 
 #endif // !HELPERS_H_

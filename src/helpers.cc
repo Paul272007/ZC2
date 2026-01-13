@@ -1,14 +1,16 @@
 #include <iostream>
+#include <sstream>
 #include <string>
 
 #include <display.h>
+#include <helpers.hh>
 
 using namespace std;
 
-bool ask()
+bool ask(const string &question)
 {
   string line;
-  cout << "[Y/n] ";
+  cout << question << endl << "[Y/n] ";
 
   while (getline(cin, line))
   {
@@ -76,4 +78,16 @@ string escape_shell_arg(const string &arg)
   }
   escaped += "'";
   return escaped;
+}
+
+vector<string> split(const string &s, char delimiter)
+{
+  vector<string> tokens;
+  string token;
+  istringstream tokenStream(s);
+  while (getline(tokenStream, token, delimiter))
+  {
+    tokens.push_back(token);
+  }
+  return tokens;
 }

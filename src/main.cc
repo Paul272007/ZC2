@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
   // init
   vector<string> init_src_files;
   string init_file, init_output;
-  bool force = false;
+  bool force = false, init_edit = false;
   /* Store the object that is going to execute the command */
   unique_ptr<Command> current_command(nullptr);
 
@@ -98,12 +98,17 @@ int main(int argc, char *argv[])
   // ========================= INIT subcommand =========================
   auto sub_init = app.add_subcommand(
       "init", "Create and initiliaze a file based on its extension.");
-  sub_init->add_option("file", init_file, "The C files")->required();
+  sub_init->add_option("file", init_file, "Output file")->required();
   sub_init->add_flag("--force,-f", force);
-  sub_init->add_option("--output,-o", init_output, "Specify output file");
+  // sub_init->add_option("--output,-o", init_output, "Specify output file");
   sub_init->add_option("--input,-i", init_src_files);
-  sub_init->callback([&]() { current_command = make_unique<Init>(); });
-  auto sub_head_init = sub_init->add_subcommand("init", "Init a header file");
+  sub_init->add_flag("--edit,-e", init_edit);
+  sub_init->callback(
+      [&]()
+      {
+        current_command =
+            make_unique<Init>(init_file, force, init_src_files, init_edit);
+      });
 
   // ========================= Parsing =========================
   try

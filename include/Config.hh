@@ -36,6 +36,8 @@ public:
   std::string cpp_std_ = "c++17";
   std::string include_dir_ = "/usr/local/include/";
   std::string lib_dir_ = "/usr/local/lib/";
+  std::string editor_ = "nano";
+  bool open_on_init_ = true;
 
 private:
   void fetch();

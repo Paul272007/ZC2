@@ -26,3 +26,6 @@ Simply run `./uninstall.sh` with root privileges from the root of the repository
 - `4`: File has uncorrect extension
 - `5`: Bad command
 - `6`: File execution error
+- `7`: File has unsupported extension/type
+- `8`: Keyboard interruption error
+- `9`: Error while writing into a file

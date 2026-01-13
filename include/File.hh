@@ -55,14 +55,45 @@ public:
   bool exists() const;
 
   /**
-   * @brief Write the formatted declarations to the file.
+   * @brief Write the formatted C declarations to the file.
    */
-  bool writeDeclarations(const Declarations &decls,
-                         const std::string &constant) const;
+  bool writeDeclarations(const Declarations &decls) const;
+
+  /**
+   * @brief Initialize a new python file
+   */
+  bool initPython() const;
+
+  /**
+   * @brief Initialize a new C source file
+   */
+  bool initC() const;
+
+  /**
+   * @brief Initialize a new C++ source file
+   */
+  bool initCPP() const;
+
+  /**
+   * @brief Initialize a new C header file
+   */
+  bool initH() const;
+
+  /**
+   * @brief Initialize a new C++ header file
+   */
+  bool initHPP() const;
+
   /**
    * @brief Display the filepath to f
    */
   void display(std::ostream &f = std::cout) const;
+
+  /**
+   * @brief Get the constant corresponding to this file to make header guards
+   * @return FILENAME_H_
+   */
+  std::string getHeaderGuardConstant() const;
 
 private:
   std::string path_;

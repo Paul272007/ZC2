@@ -46,6 +46,8 @@ void Config::fetch()
   cpp_std_ = json_conf.value("cpp_std", "c++17");
   include_dir_ = json_conf.value("include_dir", "/usr/local/include/");
   lib_dir_ = json_conf.value("lib_dir", "/usr/local/lib/");
+  editor_ = json_conf.value("editor", "nano");
+  open_on_init_ = json_conf.value("open_on_init", true);
 }
 
 void Config::write()

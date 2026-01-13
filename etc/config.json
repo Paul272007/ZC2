@@ -14,5 +14,7 @@
   "libraries": {
     "math": "-lm",
     "ncurses": "-lncurses"
-  }
+  },
+  "editor": "nvim",
+  "open_on_init": false
 }
