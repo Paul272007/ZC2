@@ -3,12 +3,12 @@
 
 #include <Command.hh>
 
-class Header : public Command
+class Init : public Command
 {
 public:
-  Header();
+  Init();
   virtual int execute() override;
-  virtual ~Header();
+  virtual ~Init();
 };
 
 #endif // !HEADER_H_

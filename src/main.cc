@@ -5,16 +5,16 @@
 #include <vector>
 
 #include <CLI11.hpp>
-#include <Header.hh>
+#include <Init.hh>
 #include <Lib.hh>
 #include <Run.hh>
 #include <ZCError.hh>
-// namespace fs = std::filesystem;
 
 using namespace std;
 
 int main(int argc, char *argv[])
 {
+  /* Create CLI11 app */
   CLI::App app{"ZC compiler, the easiest way to compile, execute and test "
                "C/C++ programs"};
   argv = app.ensure_utf8(argv);
@@ -34,11 +34,11 @@ int main(int argc, char *argv[])
   string lib_header, lib_archive, lib_remove_target;
   vector<string> lib_create_files;
   bool lib_force = false;
-  // header
-  vector<string> head_create_files;
-  string head_output, head_sync_h, head_sync_c, head_init_target;
-  bool head_force = false;
-
+  // init
+  vector<string> init_src_files;
+  string init_file, init_output;
+  bool force = false;
+  /* Store the object that is going to execute the command */
   unique_ptr<Command> current_command(nullptr);
 
   // ========================= RUN subcommand =========================
@@ -95,48 +95,28 @@ int main(int argc, char *argv[])
       ->required();
   sub_lib_remove->callback([&]() { current_command = make_unique<Lib>(); });
 
-  // ========================= HEADER subcommand =========================
-  auto sub_header = app.add_subcommand("header", "Actions on header files.");
-  sub_header->require_subcommand(1);
-
-  // header create
-  auto sub_head_create =
-      sub_header->add_subcommand("create", "Generate a new header file");
-  sub_head_create->add_option("files", head_create_files, "The C files")
-      ->required();
-  sub_head_create->add_flag("--force,-f", head_force);
-  sub_head_create->add_option("--output,-o", head_output,
-                              "Specify output file");
-  sub_head_create->callback([&]() { current_command = make_unique<Header>(); });
-
-  // header sync
-  auto sub_head_sync =
-      sub_header->add_subcommand("sync", "Modify existing header file");
-  sub_head_sync->add_option("headerfile", head_sync_h)->required();
-  sub_head_sync->add_option("cfile", head_sync_c)->required();
-  sub_head_sync->callback([&]() { current_command = make_unique<Header>(); });
-
-  // header init
-  auto sub_head_init = sub_header->add_subcommand("init", "Init a header file");
-  sub_head_init->add_option("headerfile", head_init_target)->required();
-  sub_head_init->add_flag("--force,-f", head_force);
-  sub_head_init->callback([&]() { current_command = make_unique<Header>(); });
+  // ========================= INIT subcommand =========================
+  auto sub_init = app.add_subcommand(
+      "init", "Create and initiliaze a file based on its extension.");
+  sub_init->add_option("file", init_file, "The C files")->required();
+  sub_init->add_flag("--force,-f", force);
+  sub_init->add_option("--output,-o", init_output, "Specify output file");
+  sub_init->add_option("--input,-i", init_src_files);
+  sub_init->callback([&]() { current_command = make_unique<Init>(); });
+  auto sub_head_init = sub_init->add_subcommand("init", "Init a header file");
 
   // ========================= Parsing =========================
   try
   {
     app.parse(argc, argv);
-  }
-  catch (const CLI::ParseError &e)
-  {
-    return app.exit(e);
-  }
-  try
-  {
     if (current_command)
       return current_command->execute();
   }
-  catch (const ZCError &e)
+  catch (const CLI::ParseError &e) // Handle CLI11 errors first
+  {
+    return app.exit(e);
+  }
+  catch (const ZCError &e) // Write a formatted message for normal ZCErrors
   {
     if (e.code() != 6)
       cerr << e << endl;
@@ -144,7 +124,7 @@ int main(int argc, char *argv[])
       cerr << "Operation canceled." << endl;
     return e.code();
   }
-  catch (const exception &e)
+  catch (const exception &e) // Write a special message for unexpected errors
   {
     cerr << "Unexpected error: " << e.what();
     return -1;

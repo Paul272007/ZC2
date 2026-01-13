@@ -7,6 +7,8 @@
 #include <ZCError.hh>
 #include <helpers.hh>
 
+#define DEBUG_MODE
+
 using namespace std;
 namespace fs = std::filesystem;
 
@@ -57,7 +59,9 @@ int Run::execute()
   if (output_name.empty())
     throw ZCError(3, "No main function was found in the given files");
   buildCommand(build_cmd, output_name);
+#ifdef DEBUG_MODE
   debug("Build command: " + build_cmd);
+#endif
   // TODO : make better displaying with the C display.h library
   cout << flush;
   // TODO : get command output in a variable instead of stdout
@@ -85,7 +89,9 @@ int Run::execute()
   if (!config_.auto_keep_ && !keep_ && fs::exists(output_name))
   {
     fs::remove(output_name);
+#ifdef DEBUG_MODE
     debug("Temporary file removed: " + output_name);
+#endif
   }
   return (run_res == 0) ? 0 : 6;
 }
