@@ -301,7 +301,7 @@ bool File::writeContent(const string &content) const
 
 unique_ptr<Declarations> File::parse() const
 {
-  unique_ptr<Declarations> decls;
+  unique_ptr<Declarations> decls = make_unique<Declarations>();
 
   // 1. Lire le contenu du fichier pour l'extraction de texte
   string content = readFile();
