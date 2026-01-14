@@ -2,7 +2,6 @@
 #include <sstream>
 #include <string>
 
-#include <display.h>
 #include <helpers.hh>
 
 using namespace std;

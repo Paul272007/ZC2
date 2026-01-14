@@ -159,13 +159,13 @@ void Run::buildCommand(string &buildCmd, const string &output_name) const
   stringstream cmd;
   // Compiler and standard
   if (plus_)
-    cmd << config_.cpp_compiler_ << " -std=" << config_.cpp_std_ << " ";
+    cmd << config_.cpp_compiler_ << " '-std=" << config_.cpp_std_ << "' ";
   else
-    cmd << config_.c_compiler_ << " -std=" << config_.c_std_ << " ";
+    cmd << config_.c_compiler_ << " '-std=" << config_.c_std_ << "' ";
 
   // Global flags
   for (const auto &f : config_.flags_)
-    cmd << f << " ";
+    cmd << "'" << f << "' ";
 
   // Source files
   for (const auto &file : files_)
@@ -190,7 +190,7 @@ void Run::buildCommand(string &buildCmd, const string &output_name) const
     const vector<string> includes = getInclusions();
     for (const auto &include : includes)
     {
-      cmd << include << " ";
+      cmd << "'" << include << "' ";
     }
     break;
   }
@@ -234,7 +234,7 @@ vector<string> Run::getInclusions() const
 
   for (const auto &f : files_)
   {
-    vector<string> includes = f.getInclusions(config_.libraries_);
+    vector<string> includes = f.getInclusions(config_.libraries_.at("c"));
     for (const auto &include : includes)
       if (find(flags.begin(), flags.end(), include) == flags.end())
         flags.push_back(include);

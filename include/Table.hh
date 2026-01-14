@@ -1,9 +1,7 @@
-#ifndef _DISPLAY_H_
-#define _DISPLAY_H_
+#pragma once
 
-#include <stdint.h>
-#include <sys/ioctl.h>
-#include <unistd.h>
+#include <string>
+#include <vector>
 
 // clang-format off
 
@@ -98,128 +96,116 @@
 #define FONT_HEIGHT 5
 #define FONT_WIDTH 6
 
-#ifdef __cplusplus
-extern "C"
+// Ascii art font
+extern const char UPPER[26][FONT_HEIGHT][FONT_WIDTH];
+
+/**
+ * @brief Contains all characters corresponding to the width chosen by the
+ * user
+ */
+struct TableChars
 {
-#endif
+  std::string cross_;
+  std::string sepCross_;
+  std::string sepSepCross_;
+  std::string row_;
+  std::string col_;
+  std::string sepRow_;
+  std::string sepCol_;
+  std::string borderCol_;
+  std::string borderRow_;
+  std::string topT_;
+  std::string topSepT_;
+  std::string bottomSepT_;
+  std::string leftT_;
+  std::string rightT_;
+  std::string leftSepT_;
+  std::string rightSepT_;
+  std::string bottomT_;
+  std::string topLeftCorner_;
+  std::string bottomLeftCorner_;
+  std::string topRightCorner_;
+  std::string bottomRightCorner_;
+};
 
-  // Ascii art font
-  extern const char UPPER[26][FONT_HEIGHT][FONT_WIDTH];
+/**
+ * @brief Table structure
+ */
+class Table
+{
+public:
+  using Chars = struct TableChars;
+  Table(int n_rows, int n_cols, bool hasRowHeaders, bool hasColHeaders,
+        const std::vector<std::vector<std::string>> &content);
+  ~Table();
 
-  /**
-   * @brief Contains all characters corresponding to the width chosen by the
-   * user
-   */
-  typedef struct
-  {
-    char *cross;
-    char *sepCross;
-    char *sepSepCross;
-    char *row;
-    char *col;
-    char *sepRow;
-    char *sepCol;
-    char *borderCol;
-    char *borderRow;
-    char *topT;
-    char *topSepT;
-    char *bottomSepT;
-    char *leftT;
-    char *rightT;
-    char *leftSepT;
-    char *rightSepT;
-    char *bottomT;
-    char *topLeftCorner;
-    char *bottomLeftCorner;
-    char *topRightCorner;
-    char *bottomRightCorner;
-  } TableChars;
-
-  /**
-   * @brief Table structure
-   */
-  typedef struct
-  {
-    // Number of columns in the table
-    int n_cols;
-    // Number of rows in the table
-    int n_rows;
-    // The lengths of each element in the table
-    int **lengths;
-    // The longuest width for each column
-    int *max_widths;
-    // The body of the table
-    char ***content;
-    // Flags that store informations about the thickess of each line
-    int8_t flags;
-    // Characters of the table borders
-    TableChars *chars;
-    // The current line that is being displayed
-    int current_line;
-  } Table;
-
-  // Utility functions for displaying
-
-  /**
-   * @brief Store the size of the terminal into height and width
-   */
-  void get_term_size(int *height, int *width);
-
-  /**
-   * @brief Print out an ascii art version of the string.
-   * Doesn't handle lowercase and special characters yet.
-   */
-  void title(const char *title);
-
-  /**
-   * @brief Print out the given text centered in a frame the size of the window.
-   */
-  void frame(const char *title);
-
-  /**
-   * @brief Print out a centered title in a frame.
-   * Same limitations as the title() function
-   */
-  void header(const char *title);
-
-  /**
-   * @brief Draw a horizontal line of length size.
-   */
-  void line(int length);
-
-  /**
-   * @brief Print out length spaces
-   */
-  void padding(int length);
-
-  /**
-   * @brief Create a new Table
-   * @return a pointer to this new Table
-   */
-  Table *newTable(int n_rows, int n_cols, int8_t hasRowHeaders,
-                  int8_t hasColHeaders);
-  /**
-   * @brief Set the thickess of each border of the table
-   */
-  void setTableThickness(Table *ptr, int8_t rowThickness, int8_t colThickness,
-                         int8_t rowSeparatorThickness,
-                         int8_t colSeparatorThickness,
-                         int8_t rowBorderThickness, int8_t colBorderThickness);
-  /**
-   * @brief Set the content of the table
-   */
-  void setTableContent(Table *ptr, char ***content);
-  /**
-   * @brief Delete the table and free all its contents
-   */
-  void deleteTable(Table *ptr);
   /**
    * @brief Print out the Table
    */
-  void drawTable(Table *ptr);
+  void draw();
 
-#ifdef __cplusplus
-}
-#endif
+  /**
+   * @brief Set the content of the table
+   */
+  void setContent(std::vector<std::vector<std::string>> content);
 
-#endif // _DISPLAY_H_
+  /**
+   * @brief Set the thickess of each border of the table
+   */
+  void setThickness(bool rowThickness, bool colThickness,
+                    bool rowSeparatorThickness, bool colSeparatorThickness,
+                    bool rowBorderThickness, bool colBorderThickness);
+
+private:
+  void getWidths();
+  void getChars();
+  void topLine();
+  void middleLine();
+  void bottomLine();
+  void columnHeaderSeparator();
+  void separator();
+
+  /**
+   * @brief The number of columns in the table
+   */
+  int n_cols_;
+
+  /**
+   * @brief The number of rows in the table
+   */
+  int n_rows_;
+
+  /**
+   * @brief The current line that is being displayed
+   */
+  int current_line_;
+
+  /**
+   * @brief Characters of the table borders
+   */
+  Chars chars_;
+
+  /**
+   * @brief The longuest width for each column
+   */
+  std::vector<int> max_widths_;
+
+  /**
+   * @brief The body of the table
+   */
+  std::vector<std::vector<std::string>> content_;
+
+  /**
+   * @brief The size of each element
+   */
+  std::vector<std::vector<int>> sizes_;
+
+  bool hasRowHeaders_ = false;
+  bool hasColHeaders_ = false;
+  bool rowThickness_ = false;
+  bool colThickness_ = false;
+  bool rowBorderThickness_ = false;
+  bool colBorderThickness_ = false;
+  bool rowSeparatorThickness_ = false;
+  bool colSeparatorThickness_ = false;
+};

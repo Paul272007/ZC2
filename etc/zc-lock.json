@@ -1,0 +1,9 @@
+{
+  "supported_languages": ["c", "cpp", "py"],
+  "libraries": {
+    "c": [
+      ["math", "-lm", "0.0.0", "std"],
+      ["ncurses", "-lncurses", "0.0.0", "std"]
+    ]
+  }
+}

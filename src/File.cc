@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 
+#include <Config.hh>
 #include <File.hh>
 #include <ZCError.hh>
 #include <helpers.hh>
@@ -521,7 +522,7 @@ bool File::containsMain() const
   return context.found;
 }
 
-vector<string> File::getInclusions(const map<string, string> &libs) const
+vector<string> File::getInclusions(const vector<Library> &libs) const
 {
   vector<string> found_includes;
   vector<string> flags;
@@ -545,12 +546,12 @@ vector<string> File::getInclusions(const map<string, string> &libs) const
     // On compare avec votre map de bibliothèques pour extraire les flags
     for (const auto &inc : found_includes)
     {
-      for (const auto &[lib_name, lib_flag] : libs)
+      for (int i = 1; i < libs.size(); i++)
       {
         // Si l'inclusion contient le nom de la lib (ex: "math" dans "math.h")
-        if (inc.find(lib_name) != string::npos)
+        if (inc.find(libs[i].libname_) != string::npos)
         {
-          flags.push_back(lib_flag);
+          flags.push_back(libs[i].compiling_option_);
         }
       }
     }

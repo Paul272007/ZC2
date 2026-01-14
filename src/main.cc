@@ -6,7 +6,7 @@
 
 #include <CLI11.hpp>
 #include <Init.hh>
-#include <Lib.hh>
+#include <LibList.hh>
 #include <Run.hh>
 #include <ZCError.hh>
 
@@ -67,7 +67,7 @@ int main(int argc, char *argv[])
 
   // lib list
   sub_lib->add_subcommand("list", "List all installed libraries")
-      ->callback([&]() { current_command = make_unique<Lib>(); });
+      ->callback([&]() { current_command = make_unique<LibList>(); });
 
   // lib install
   auto sub_lib_install =
@@ -77,7 +77,8 @@ int main(int argc, char *argv[])
   sub_lib_install->add_option("libfile", lib_archive, "The archive file (.a)")
       ->required();
   sub_lib_install->add_flag("--force,-f", lib_force, "Force writing");
-  sub_lib_install->callback([&]() { current_command = make_unique<Lib>(); });
+  sub_lib_install->callback([&]()
+                            { current_command = make_unique<LibList>(); });
 
   // lib create
   auto sub_lib_create =
@@ -86,14 +87,14 @@ int main(int argc, char *argv[])
       ->add_option("files", lib_create_files, "The source code files (.c)")
       ->required();
   sub_lib_create->add_flag("--force,-f", lib_force, "Force writing");
-  sub_lib_create->callback([&]() { current_command = make_unique<Lib>(); });
+  sub_lib_create->callback([&]() { current_command = make_unique<LibList>(); });
 
   // lib remove
   auto sub_lib_remove = sub_lib->add_subcommand("remove", "Remove a library");
   sub_lib_remove
       ->add_option("library", lib_remove_target, "The library header to remove")
       ->required();
-  sub_lib_remove->callback([&]() { current_command = make_unique<Lib>(); });
+  sub_lib_remove->callback([&]() { current_command = make_unique<LibList>(); });
 
   // ========================= INIT subcommand =========================
   auto sub_init = app.add_subcommand(
@@ -131,7 +132,7 @@ int main(int argc, char *argv[])
   }
   catch (const exception &e) // Write a special message for unexpected errors
   {
-    cerr << "Unexpected error: " << e.what();
+    cerr << "Unexpected error: " << e.what() << endl;
     return -1;
   }
 }

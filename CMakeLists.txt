@@ -59,4 +59,4 @@ target_link_libraries(zc PRIVATE
 
 # Installation rules
 install(TARGETS zc DESTINATION bin)
-install(FILES etc/config.json DESTINATION /etc/zc)
+install(FILES etc/config.json etc/zc-lock.json DESTINATION /etc/zc)

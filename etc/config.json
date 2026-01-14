@@ -3,18 +3,11 @@
   "cpp_compiler": "g++",
   "include_dir": "/usr/local/include/",
   "lib_dir": "/usr/local/lib/",
-  "flags": [
-    "-Wall",
-    "-Wextra"
-  ],
+  "flags": ["-Wall", "-Wextra"],
   "c_std": "c99",
   "cpp_std": "c++17",
+  "editor": "nvim",
   "clear_before_run": true,
   "auto_keep": true,
-  "libraries": {
-    "math": "-lm",
-    "ncurses": "-lncurses"
-  },
-  "editor": "nvim",
   "open_on_init": false
 }

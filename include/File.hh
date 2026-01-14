@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include <Config.hh>
+
 using Declarations = std::map<std::string, std::vector<std::string>>;
 
 class File
@@ -37,7 +39,7 @@ public:
    * @brief Get all #include in the file
    */
   std::vector<std::string>
-  getInclusions(const std::map<std::string, std::string> &libs) const;
+  getInclusions(const std::vector<Library> &libs) const;
 
   /**
    * @brief Write content to the file.
