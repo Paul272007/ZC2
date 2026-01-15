@@ -1,8 +1,8 @@
 {
-  "c_compiler": "gcc",
-  "cpp_compiler": "g++",
-  "include_dir": "/usr/local/include/",
-  "lib_dir": "/usr/local/lib/",
+  "c_compiler": "clang",
+  "cpp_compiler": "clang++",
+  "include_dir": "/usr/local/include/zc/",
+  "lib_dir": "/usr/local/lib/zc/",
   "flags": ["-Wall", "-Wextra"],
   "c_std": "c99",
   "cpp_std": "c++17",

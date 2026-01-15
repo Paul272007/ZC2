@@ -80,16 +80,24 @@ public:
    */
   [[nodiscard]] std::vector<std::vector<std::string>> librariesToMatrix() const;
 
-  /* User settings */
+  /* Compiling settings */
+
   std::string c_compiler_ = "gcc";
   std::string cpp_compiler_ = "g++";
   std::vector<std::string> flags_ = {"-Wall", "-Wextra"};
-  bool clear_before_run_ = true;
-  bool auto_keep_ = false;
   std::string c_std_ = "c99";
   std::string cpp_std_ = "c++17";
-  std::string include_dir_ = "/usr/local/include/";
-  std::string lib_dir_ = "/usr/local/lib/";
+
+  /* Paths */
+
+  std::string install_prefix_;
+  std::string include_dir_ = "/usr/local/include/zc/";
+  std::string lib_dir_ = "/usr/local/lib/zc/";
+
+  /* User settings */
+
+  bool clear_before_run_ = true;
+  bool auto_keep_ = false;
   std::string editor_ = "nano";
   bool open_on_init_ = true;
 

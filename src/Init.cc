@@ -16,7 +16,7 @@ Init::Init(string &output_file, bool force, vector<string> &input_files,
     : force_(force), output_file_(File(output_file)), edit_(edit)
 {
   if (output_file_.getLanguage_() == UNSUPPORTED)
-    throw ZCError(7, "The file has an unsupported extension");
+    throw ZCError(ZC_UNSUPPORTED_TYPE, "The file has an unsupported extension");
 
   // Get potential input files
   if (input_files.empty())

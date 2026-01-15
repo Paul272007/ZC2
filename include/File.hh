@@ -33,12 +33,19 @@ public:
 
   /**
    * @brief Get the file path
+   *
    * @return path_
    */
   std::string getPath_() const;
 
   /**
+   * @brief Get the file's name instead of its complete path
+   */
+  std::string getFilename() const;
+
+  /**
    * @brief Get the file language, based on its extension
+   *
    * @return the language of the file
    */
   Language getLanguage_() const;
@@ -108,6 +115,8 @@ public:
 
   /**
    * @brief Initialize a new C++ header file
+   *
+   * @return true if it was successful, false otherwise
    */
   bool initHPP() const;
 
@@ -118,9 +127,18 @@ public:
 
   /**
    * @brief Get the constant corresponding to this file to make header guards
+   *
    * @return FILENAME_H_
    */
   std::string getHeaderGuardConstant() const;
+
+  /**
+   * @brief Copy the file content to f
+   *
+   * @param f the file that gets filled
+   * @return true if the operation was successful, false otherwise
+   */
+  bool copyTo(File &f) const;
 
 private:
   std::string path_;

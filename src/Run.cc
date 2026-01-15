@@ -31,9 +31,10 @@ int Run::execute()
   string badFile = "";
   // Check that all files exist
   if (!filesExist(badFile))
-    throw ZCError(2, "File not found: " + badFile);
+    throw ZCError(ZC_FILE_NOT_FOUND, "File not found: " + badFile);
   if (!filesHaveCorrectExt(badFile))
-    throw ZCError(4, "File has an uncorrect extension: " + badFile);
+    throw ZCError(ZC_UNSUPPORTED_TYPE,
+                  "File has an uncorrect extension: " + badFile);
   string output_name = "", build_cmd = "";
   int height, width;
 
@@ -57,7 +58,8 @@ int Run::execute()
     break;
   }
   if (output_name.empty())
-    throw ZCError(3, "No main function was found in the given files");
+    throw ZCError(ZC_NO_MAIN_FUNCTION,
+                  "No main function was found in the given files");
   buildCommand(build_cmd, output_name);
 #ifdef DEBUG_MODE
   debug("Build command: " + build_cmd);
@@ -68,7 +70,7 @@ int Run::execute()
   int compile_res = system(build_cmd.c_str());
 
   if (compile_res != 0)
-    throw ZCError(1, "Compilation failed");
+    throw ZCError(ZC_COMPILATION, "Compilation failed");
 
   success("Compilation successful.");
   if (!(mode_ == FULL))
@@ -116,7 +118,7 @@ Mode Run::getMode(bool preprocess, bool compile, bool assemble) const
     mode = ASSEMBLE;
   }
   if (flags_found > 1)
-    throw ZCError(5, "Incompatible options");
+    throw ZCError(ZC_BAD_COMMAND, "Incompatible options");
   return mode;
 }
 
@@ -163,9 +165,15 @@ void Run::buildCommand(string &buildCmd, const string &output_name) const
   else
     cmd << config_.c_compiler_ << " '-std=" << config_.c_std_ << "' ";
 
-  // Global flags
+  // User flags
   for (const auto &f : config_.flags_)
-    cmd << "'" << f << "' ";
+    cmd << escape_shell_arg(f) << " ";
+
+  cmd << "-I" << escape_shell_arg(config_.include_dir_) << " ";
+  cmd << "-L" << escape_shell_arg(config_.lib_dir_) << " ";
+
+  if (mode_ == FULL)
+    cmd << "-Wl,-rpath," << escape_shell_arg(config_.lib_dir_) << " ";
 
   // Source files
   for (const auto &file : files_)
@@ -189,9 +197,7 @@ void Run::buildCommand(string &buildCmd, const string &output_name) const
   default:
     const vector<string> includes = getInclusions();
     for (const auto &include : includes)
-    {
-      cmd << "'" << include << "' ";
-    }
+      cmd << escape_shell_arg(include) << " ";
     break;
   }
 

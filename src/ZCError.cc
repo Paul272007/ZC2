@@ -2,14 +2,17 @@
 
 using namespace std;
 
-ZCError::ZCError(int code, string message) : m_code(code), m_message(message) {}
+ZCError::ZCError(ErrorCode code, string message)
+    : code_(code), message_(message)
+{
+}
 
 ZCError::~ZCError() {}
 
 void ZCError::display(ostream &f) const
 {
-  f << RED << "[ERROR] " << COLOR_RESET << "(exit code: " << m_code << ") "
-    << m_message;
+  f << RED << "[ERROR] " << COLOR_RESET << "(exit code: " << code_ << ") "
+    << message_;
 }
 
 ostream &operator<<(ostream &s, const ZCError &e)
@@ -18,4 +21,4 @@ ostream &operator<<(ostream &s, const ZCError &e)
   return s;
 }
 
-int ZCError::code() const { return m_code; }
+int ZCError::code() const { return (int)code_; }

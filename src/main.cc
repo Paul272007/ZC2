@@ -6,6 +6,7 @@
 
 #include <CLI11.hpp>
 #include <Init.hh>
+#include <LibCreate.hh>
 #include <LibList.hh>
 #include <Run.hh>
 #include <ZCError.hh>
@@ -23,28 +24,40 @@ int main(int argc, char *argv[])
   app.require_subcommand(1);
   // ==================== Variables to store arguments
   // run
-  vector<string> run_files;
   bool run_keep = false;
   bool run_plus = false;
   bool run_c = false;
   bool run_S = false;
   bool run_E = false;
   vector<string> run_args;
-  // lib
-  string lib_header, lib_archive, lib_remove_target;
-  vector<string> lib_create_files;
-  bool lib_force = false;
+
+  // lib (empty for the moment)
+  string lib_output_name;
   // init
-  vector<string> init_src_files;
   string init_file, init_output;
-  bool force = false, init_edit = false;
+  bool init_edit = false;
+
+  // Variables for all commands
+  vector<string> files;
+  vector<string> input_files;
+  bool force = false;
+  string library_name;
+
   /* Store the object that is going to execute the command */
   unique_ptr<Command> current_command(nullptr);
 
+  /*
+   * ===============================================
+   * =============================================== Subcommands
+   * ===============================================
+   */
+
   // ========================= RUN subcommand =========================
+
   auto sub_run = app.add_subcommand("run", "Simply compile and run C/C++ file");
   sub_run
-      ->add_option("files", run_files, "The files to be compiled and executed")
+      ->add_option("files", input_files,
+                   "The files to be compiled and executed")
       ->required();
   sub_run->add_flag("--keep,-k", run_keep,
                     "Do not delete the executable after being executed");
@@ -57,11 +70,12 @@ int main(int argc, char *argv[])
   sub_run->callback(
       [&]()
       {
-        current_command = make_unique<Run>(run_files, run_args, run_keep,
+        current_command = make_unique<Run>(input_files, run_args, run_keep,
                                            run_plus, run_E, run_S, run_c);
       });
 
   // ========================= LIB subcommand =========================
+
   auto sub_lib = app.add_subcommand("lib", "Actions on libraries.");
   sub_lib->require_subcommand(1);
 
@@ -69,46 +83,47 @@ int main(int argc, char *argv[])
   sub_lib->add_subcommand("list", "List all installed libraries")
       ->callback([&]() { current_command = make_unique<LibList>(); });
 
-  // lib install
-  auto sub_lib_install =
-      sub_lib->add_subcommand("install", "Install a new library");
-  sub_lib_install->add_option("headerfile", lib_header, "The header file (.h)")
-      ->required();
-  sub_lib_install->add_option("libfile", lib_archive, "The archive file (.a)")
-      ->required();
-  sub_lib_install->add_flag("--force,-f", lib_force, "Force writing");
-  sub_lib_install->callback([&]()
-                            { current_command = make_unique<LibList>(); });
+  // -----------------------------------------------------------------------------
 
   // lib create
-  auto sub_lib_create =
-      sub_lib->add_subcommand("create", "Create and install a static library");
-  sub_lib_create
-      ->add_option("files", lib_create_files, "The source code files (.c)")
-      ->required();
-  sub_lib_create->add_flag("--force,-f", lib_force, "Force writing");
-  sub_lib_create->callback([&]() { current_command = make_unique<LibList>(); });
 
-  // lib remove
-  auto sub_lib_remove = sub_lib->add_subcommand("remove", "Remove a library");
-  sub_lib_remove
-      ->add_option("library", lib_remove_target, "The library header to remove")
+  auto sub_lib_create = sub_lib->add_subcommand(
+      "create", "Create a static (.a) or shared (.so) library");
+
+  sub_lib_create
+      ->add_option("output", lib_output_name,
+                   "Output file (e.g. libmylib.a or libmylib.so)")
       ->required();
-  sub_lib_remove->callback([&]() { current_command = make_unique<LibList>(); });
+
+  sub_lib_create
+      ->add_option("files", files, "Source files (.c, .cpp) or objects (.o)")
+      ->required();
+
+  sub_lib_create->add_flag(
+      "--force,-f", force,
+      "Force writing even the files already exist in the zc directory");
+
+  sub_lib_create->callback(
+      [&]()
+      {
+        current_command = make_unique<LibCreate>(lib_output_name, files, force);
+      });
 
   // ========================= INIT subcommand =========================
+
   auto sub_init = app.add_subcommand(
       "init", "Create and initiliaze a file based on its extension.");
   sub_init->add_option("file", init_file, "Output file")->required();
   sub_init->add_flag("--force,-f", force);
   // sub_init->add_option("--output,-o", init_output, "Specify output file");
-  sub_init->add_option("--input,-i", init_src_files);
+  sub_init->add_option("--input,-i", input_files,
+                       "Source code to be used as basis for the new file");
   sub_init->add_flag("--edit,-e", init_edit);
   sub_init->callback(
       [&]()
       {
         current_command =
-            make_unique<Init>(init_file, force, init_src_files, init_edit);
+            make_unique<Init>(init_file, force, input_files, init_edit);
       });
 
   // ========================= Parsing =========================

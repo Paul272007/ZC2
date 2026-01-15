@@ -1,17 +1,17 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 #include <Command.hh>
 #include <Config.hh>
 #include <File.hh>
-#include <vector>
 
 class LibCreate : public Command
 {
 public:
-  LibCreate(const std::vector<std::string> &files,
-            const std::vector<std::string> &input_files);
+  LibCreate(const std::string &output_name,
+            const std::vector<std::string> &files, bool force);
   virtual int execute() override;
   ~LibCreate();
 
@@ -24,9 +24,19 @@ private:
    * languages, but the procedure is the same so they go into the same function
    * @return true if the installation was successful, false otherwise
    */
-  bool createCLib(Language language) const;
-  Language guessLibType() const;
-
+  bool isShared() const;
+  void compileObjects(const std::vector<std::string> &sources,
+                      std::vector<std::string> &objects, bool shared) const;
+  // bool createCLib(Language language);
+  // Language guessLibType() const;
+  // bool addFileToHeaders(const File &f);
+  // bool addFileToBinaries(const File &f);
+  //
+  // std::vector<File> files_;
+  // std::vector<File> headers_;
+  // std::vector<File> binaries_;
+  bool force_;
   Config config_;
-  std::vector<File> files_;
+  std::string output_name_;
+  std::vector<std::string> files_;
 };

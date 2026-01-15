@@ -295,6 +295,8 @@ string File::getPath_() const { return path_; }
 
 Language File::getLanguage_() const { return language_; }
 
+string File::getFilename() const { return split(path_, '/').back(); }
+
 string File::readFile() const
 {
   ifstream file(path_);
@@ -311,12 +313,15 @@ bool File::writeContent(const string &content) const
   ofstream file(path_);
 
   if (!file.is_open())
+  {
+    throw ZCError(ZC_FILE_NOT_FOUND, "File not found: " + path_);
     return false;
+  }
 
   file << content;
   if (!file.good())
   {
-    throw ZCError(9, "Error writing to file: " + path_);
+    throw ZCError(ZC_FILE_WRITING_ERROR, "Error writing to file: " + path_);
     return false;
   }
   success("File written: " + path_);
@@ -327,12 +332,12 @@ unique_ptr<Declarations> File::parse() const
 {
   unique_ptr<Declarations> decls = make_unique<Declarations>();
 
-  // 1. Lire le contenu du fichier pour l'extraction de texte
+  // 1. Read file and extract content
   string content = readFile();
   if (content.empty())
     return decls;
 
-  // 2. Initialiser l'index libclang
+  // 2. Initialize libclang index
   CXIndex index = clang_createIndex(0, 0);
 
   // 3. Arguments de compilation (très important pour les headers)
@@ -350,7 +355,8 @@ unique_ptr<Declarations> File::parse() const
     // Fallback ou erreur silencieuse, selon votre besoin.
     // Ici on lance l'erreur comme dans votre code original.
     clang_disposeIndex(index);
-    throw ZCError(9, "Unable to parse translation unit: " + path_);
+    throw ZCError(ZC_FILE_PARSING_ERROR,
+                  "Unable to parse translation unit: " + path_);
   }
 
   // 5. Lancer le visiteur
@@ -599,7 +605,7 @@ bool File::appendContent(const string &content) const
 
 string File::getHeaderGuardConstant() const
 {
-  return "_" + upper(split(split(path_, '/').back(), '.').front()) + "_H_";
+  return "_" + upper(split(getFilename(), '.').front()) + "_H_";
 }
 
 bool File::initPython() const
@@ -662,4 +668,11 @@ bool File::initHPP() const
   content << "#pragma once\n\n";
 
   return writeContent(content.str());
+}
+
+bool File::copyTo(File &f) const
+{
+  string content = readFile();
+
+  return f.writeContent(content);
 }

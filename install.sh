@@ -34,15 +34,21 @@ fi
 echo -e "${BLUE}[1/5] Creating directory structure...${NC}"
 CONFIG_DIR="/etc/zc"
 BIN="/usr/local/bin/zc"
+DEFAULT_LIB="/usr/local/lib/zc"
+DEFAULT_INCLUDE="/usr/local/include/zc"
 
 # Clean up any existing installation and configure permissions
 if [ "$EUID" -ne 0 ]; then
   sudo rm -f "$BIN"
   sudo mkdir -p "$CONFIG_DIR"
+  sudo mkdir -p "$DEFAULT_LIB"
+  sudo mkdir -p "$DEFAULT_INCLUDE"
   sudo chmod 666 /etc/zc/config.json
 else
   rm -f "$BIN"
   mkdir -p "$CONFIG_DIR"
+  mkdir -p "$DEFAULT_LIB"
+  mkdir -p "$DEFAULT_INCLUDE"
   chmod 666 /etc/zc/config.json
 fi
 
@@ -60,7 +66,7 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 # Compilation
 echo -e "${BLUE}[3/5] Compiling source code...${NC}"
 # -j$(nproc) to use all available CPU cores
-cmake --build . --config Release --parallel $(nproc)
+cmake --build . --config Release --parallel "$(nproc)"
 
 # Installation
 echo -e "${BLUE}[4/5] Installing ZC...${NC}"

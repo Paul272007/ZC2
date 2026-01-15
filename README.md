@@ -23,7 +23,7 @@ Simply run `./uninstall.sh` with root privileges from the root of the repository
 - `1`: Compilation/execution failed
 - `2`: File not found error
 - `3`: Configuration error
-- `4`: File has uncorrect extension
+- `4`: Not an error yet
 - `5`: Bad command
 - `6`: File execution error
 - `7`: File has unsupported extension/type
