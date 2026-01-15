@@ -1,11 +1,12 @@
 #include <fstream>
+#include <map>
+#include <string>
+#include <vector>
 
 #include <Config.hh>
 #include <File.hh>
 #include <ZCError.hh>
-#include <map>
-#include <string>
-#include <vector>
+#include <helpers.hh>
 
 using namespace std;
 using json = nlohmann::json;
@@ -77,16 +78,28 @@ void Config::lfetch()
     msg += e.what();
     throw ZCError(1, msg);
   }
-  map<string, vector<vector<string>>> libraries_container =
-      json_conf.value<map<string, vector<vector<string>>>>("libraries", {});
 
-  for (const auto &[language, libs] : libraries_container)
+  if (json_conf.contains("libraries") && json_conf["libraries"].is_object())
   {
-    libraries_[language];
-    for (const auto &lib : libs)
+    for (const auto &[language, libs] : json_conf["libraries"].items())
     {
-      Library l = {lib[0], lib[1], lib[2], lib[3]};
-      libraries_[language].push_back(l);
+      for (const auto &lib : libs)
+      {
+        if (lib.is_array() && lib.size() >= 6)
+        {
+          // clang-format off
+          Library l;
+          l.libname_          = lib.at(0).get<string>();
+          l.headers_          = lib.at(1).get<vector<string>>();
+          l.binaries_         = lib.at(2).get<vector<string>>();
+          l.compiling_option_ = lib.at(3).get<string>();
+          l.version_          = lib.at(4).get<string>();
+          l.author_           = lib.at(5).get<string>();
+          // clang-format on
+
+          libraries_[language].push_back(l);
+        }
+      }
     }
   }
 }
@@ -113,15 +126,20 @@ void Config::write()
 vector<vector<string>> Config::librariesToMatrix() const
 {
   vector<vector<string>> v;
-  v.push_back(
-      {"Library name", "Compiling option", "Author", "Version", "Language"});
+  v.push_back({"Library name", "Header files", "Binaries", "Compiling option",
+               "Author", "Version", "Language"});
 
   for (const auto &[language, libs] : libraries_)
   {
     for (const auto &lib : libs)
     {
-      vector<string> vect{lib.libname_, lib.compiling_option_, lib.author_,
-                          lib.version_, language};
+      vector<string> vect{lib.libname_,
+                          join(lib.headers_, ", "),
+                          join(lib.binaries_, ", "),
+                          lib.compiling_option_,
+                          lib.author_,
+                          lib.version_,
+                          language};
       v.push_back(vect);
     }
   }

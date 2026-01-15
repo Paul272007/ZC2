@@ -13,23 +13,9 @@ using namespace std;
 
 Init::Init(string &output_file, bool force, vector<string> &input_files,
            bool edit)
-    : force_(force), output_file_(File(output_file)), output_type_(UNSUPPORTED),
-      edit_(edit)
+    : force_(force), output_file_(File(output_file)), edit_(edit)
 {
-  // Guess which type the output file has
-  string ext = output_file_.getExt();
-  if (ext == ".py")
-    output_type_ = PYTHON;
-  else if (ext == ".c")
-    output_type_ = C;
-  else if (ext == ".h")
-    output_type_ = C_HEADER;
-  else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx")
-    output_type_ = CPP;
-  else if (ext == ".hpp" || ext == ".hh" || ext == ".hxx")
-    output_type_ = CPP_HEADER;
-
-  if (output_type_ == UNSUPPORTED)
+  if (output_file_.getLanguage_() == UNSUPPORTED)
     throw ZCError(7, "The file has an unsupported extension");
 
   // Get potential input files
@@ -64,7 +50,7 @@ int Init::execute()
 
 bool Init::write() const
 {
-  switch (output_type_)
+  switch (output_file_.getLanguage_())
   {
   case PYTHON:
     return output_file_.initPython();

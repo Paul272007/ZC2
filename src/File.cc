@@ -266,11 +266,34 @@ CXChildVisitResult visitor_find_includes(CXCursor cursor, CXCursor parent,
 
 // ----------------------------------------------- File class
 
-File::File(string filepath) : path_(filepath) {}
+File::File(string filepath) : path_(filepath)
+{
+  string ext = getExt();
+  if (ext == ".py")
+    language_ = PYTHON;
+  else if (ext == ".pyc")
+    language_ = PYC;
+  else if (ext == ".c")
+    language_ = C;
+  else if (ext == ".h")
+    language_ = C_HEADER;
+  else if (ext == ".cpp" || ext == ".cc" || ext == ".cxx")
+    language_ = CPP;
+  else if (ext == ".hpp" || ext == ".hh" || ext == ".hxx")
+    language_ = CPP_HEADER;
+  else if (ext == ".a")
+    language_ = ARCHIVE;
+  else if (ext == ".so")
+    language_ = DYNAMIC_LIB;
+  else
+    language_ = UNSUPPORTED;
+}
 
 File::~File() {}
 
 string File::getPath_() const { return path_; }
+
+Language File::getLanguage_() const { return language_; }
 
 string File::readFile() const
 {

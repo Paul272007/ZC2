@@ -11,6 +11,20 @@
 
 using Declarations = std::map<std::string, std::vector<std::string>>;
 
+enum Language
+{
+  C,               // C source file (.c)
+  CPP,             // C++ source file (.cpp, .cc, .cxx)
+  C_HEADER,        // C header file (.h)
+  CPP_HEADER,      // C++ header file (.hpp, .hh, .hxx)
+  PYTHON,          // Python file (.py)
+  ARCHIVE,         // Archive file / static library (.a)
+  DYNAMIC_LIB,     // Dynamic library (.so)
+  PYC,             // Compressed python file (.pyc)
+  MULTI_LANGUAGES, // More than one language (not useful for single files)
+  UNSUPPORTED      // Unsupported file type
+};
+
 class File
 {
 public:
@@ -24,10 +38,21 @@ public:
   std::string getPath_() const;
 
   /**
+   * @brief Get the file language, based on its extension
+   * @return the language of the file
+   */
+  Language getLanguage_() const;
+
+  /**
    * @brief Get the file extension
    */
   std::string getExt() const;
 
+  /**
+   * @brief Get all declarations from a C file
+   * All declarations such as functions, enums, structs, includes, macros,
+   * typedefs, unions, and global variables
+   */
   std::unique_ptr<Declarations> parse() const;
 
   /**
@@ -99,6 +124,9 @@ public:
 
 private:
   std::string path_;
+
+  Language language_;
+
   /**
    * @brief Reads the content of the file.
    */

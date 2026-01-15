@@ -32,8 +32,19 @@
 struct Library
 {
   std::string libname_;
+
+  /**
+   * @brief Header files corresponding to this library
+   */
+  std::vector<std::string> headers_;
+
+  /**
+   * @brief Binaries (.a/.so) corresponding to this library
+   */
+  std::vector<std::string> binaries_;
   std::string compiling_option_;
   std::string version_;
+
   /**
    * @brief ID of the library's author
    */

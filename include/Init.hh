@@ -9,20 +9,9 @@
 #include <Config.hh>
 #include <File.hh>
 
-enum SupportedTypes
-{
-  C,          // C source file
-  CPP,        // C++ source file
-  C_HEADER,   // C header file
-  CPP_HEADER, // C++ header file
-  PYTHON,     // Python file
-  UNSUPPORTED // Unsupported file type
-};
-
 class Init : public Command
 {
 public:
-  using FileType = enum SupportedTypes;
   using Action = std::function<int()>;
 
   Init(std::string &output_file, bool force,
@@ -59,11 +48,6 @@ private:
    * edit it
    */
   bool edit_;
-
-  /**
-   * @brief The type of the output file based on its extension
-   */
-  FileType output_type_;
 
   /**
    * @brief Contains the configuration of ZC

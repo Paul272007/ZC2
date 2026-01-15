@@ -90,3 +90,15 @@ vector<string> split(const string &s, char delimiter)
   }
   return tokens;
 }
+
+string join(const vector<string> &elements, const string &delimiter)
+{
+  string out;
+  for (size_t i = 0; i < elements.size(); ++i)
+  {
+    out += elements[i];
+    if (i < elements.size() - 1)
+      out += delimiter;
+  }
+  return out;
+}

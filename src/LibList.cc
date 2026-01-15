@@ -23,7 +23,7 @@ int LibList::execute()
   }
 
   int n_rows = libs.size();
-  int n_cols = 4;
+  int n_cols = 6;
 
   Table t(n_rows, n_cols, false, true, libs);
   t.draw();
