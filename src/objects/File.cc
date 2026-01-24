@@ -496,22 +496,7 @@ bool File::writeDeclarations(const Declarations &decls) const
 
 string File::getExt() const { return path_.extension().string(); }
 
-void File::display(ostream &s) const
-{
-  s << "'";
-  for (char c : path_.string())
-  {
-    if (c == '\'')
-    {
-      s << "'\\''";
-    }
-    else
-    {
-      s << c;
-    }
-  }
-  s << "'";
-}
+void File::display(ostream &s) const { s << escape_shell_arg(path_.string()); }
 
 ostream &operator<<(ostream &stream, const File &file)
 {
@@ -561,4 +546,4 @@ vector<string> File::getInclusions(const Registry &reg) const
   return flags;
 }
 
-bool File::copy(const File &file) { return write(file.read()); }
+bool File::copy(const File &file) const { return write(file.read()); }

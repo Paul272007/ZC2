@@ -19,3 +19,5 @@ ostream &operator<<(ostream &s, const ZCError &e)
   e.display(s);
   return s;
 }
+
+int ZCError::getCode_() const { return (int)code_; }

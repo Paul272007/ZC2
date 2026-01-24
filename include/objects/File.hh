@@ -35,7 +35,7 @@ public:
   bool write(const std::string &content) const;
   bool writeDeclarations(const Declarations &decls) const;
   std::string read() const;
-  bool copy(const File &file);
+  bool copy(const File &file) const;
   bool exists() const;
   bool remove() const;
   void display(std::ostream &s) const;
@@ -49,10 +49,10 @@ public:
   /* Getters and setters */
   std::string getPath_() const;
   std::string getFilename() const;
+  std::string getExt() const;
   Language getLanguage_() const;
 
 private:
-  std::string getExt() const;
   std::filesystem::path path_;
   std::string filename_;
   Language language_;

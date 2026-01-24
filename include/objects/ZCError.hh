@@ -37,6 +37,7 @@ public:
   ZCError() = default;
   ZCError(ErrorCode code, const std::string &message);
   void display(std::ostream &stream) const;
+  int getCode_() const;
 
 private:
   ErrorCode code_ = SUCCESS;
