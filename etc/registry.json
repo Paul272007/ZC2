@@ -1,0 +1,6 @@
+{
+  "libraries": [
+    ["math", ["math.h"], [], "-lm", "0.0.0", "std"],
+    ["ncurses", [], [], "-lncurses", "0.0.0", "std"]
+  ]
+}

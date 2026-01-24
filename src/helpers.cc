@@ -1,18 +1,18 @@
 #include <cstdlib>
 #include <filesystem>
 #include <helpers.hh>
+#include <sstream>
+#include <vector>
 
 using namespace std;
 namespace fs = std::filesystem;
 
-fs::path get_zc_path()
+fs::path getZCRootDir()
 {
-  const char *home;
-
 #if defined(_WIN32) || defined(_WIN64)
-  home = getenv("USERPROFILE");
+  const char *home = getenv("USERPROFILE");
 #else
-  home = getenv("HOME");
+  const char *home = getenv("HOME");
 #endif
 
   if (!home)
@@ -37,4 +37,28 @@ string escape_shell_arg(const string &arg)
   }
   escaped += "'";
   return escaped;
+}
+
+string join(const vector<string> &v, const string &separator)
+{
+  stringstream s;
+  for (int i = 0; i < v.size(); i++)
+  {
+    if (!(i == 0))
+      s << separator;
+    s << v[i];
+  }
+  return s.str();
+}
+
+vector<string> split(const string &s, char delimiter)
+{
+  vector<string> tokens;
+  string token;
+  istringstream tokenStream(s);
+  while (getline(tokenStream, token, delimiter))
+  {
+    tokens.push_back(token);
+  }
+  return tokens;
 }

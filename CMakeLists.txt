@@ -1,5 +1,5 @@
 # TODO : !! Works for Ubuntu, have to check for Arch
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 project(ZC VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -44,8 +44,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 # Source code files
-file(GLOB SOURCES "src/commands/*.cc" "src/objects/*.cc" "src/*.cc")
-
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
+    "src/*.cc"
+)
 # Create the executable
 add_executable(zc ${SOURCES})
 

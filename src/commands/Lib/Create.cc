@@ -20,6 +20,7 @@ Create::Create(const string &package_name, const vector<string> &files,
 
 int Create::execute()
 {
+  bool is_cpp = false;
   // 1. Sort files (.c, .h, .o)
   vector<File> sources, headers, objects;
   for (const auto &f : files_)
@@ -27,9 +28,12 @@ int Create::execute()
     switch (f.getLanguage_())
     {
     case C:
-    case CPP:
     case INSTANCE:
     case ASSEMBLER:
+      sources.push_back(f);
+      break;
+    case CPP:
+      is_cpp = true;
       sources.push_back(f);
       break;
     case H:
@@ -63,7 +67,7 @@ int Create::execute()
     sources_paths.push_back(fs::path(s.getPath_()));
 
   registry_.savePackage(pkg, force_, headers_paths, objects_paths,
-                        sources_paths);
+                        sources_paths, is_cpp);
 
   return 0;
 }

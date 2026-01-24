@@ -1,13 +1,16 @@
 #pragma once
 
+#include <cstdlib>
 #include <filesystem>
 #include <string>
 #include <vector>
+
+#include <helpers.hh>
+#include <objects/File.hh>
 #include <zcio.hh>
 
-#include <objects/File.hh>
-
-#define REGISTRY "zc-lock.json"
+#define REGISTRY "registry.json"
+#define N_ATTR_PACKAGE 6
 
 struct Package
 {
@@ -46,7 +49,7 @@ public:
   void savePackage(Package &package, bool force,
                    std::vector<std::filesystem::path> &headers,
                    std::vector<std::filesystem::path> &objects,
-                   std::vector<std::filesystem::path> &sources);
+                   std::vector<std::filesystem::path> &sources, bool is_cpp);
 
   std::vector<Package> getPackages() const;
 
@@ -60,24 +63,33 @@ private:
   Registry() = default;
 
   /**
-   * @brief Index the Package
+   * @brief Index the Package in the configuration file
    */
   void indexPackage(const Package &package);
 
+  /**
+   * @brief Compile source files to object files
+   *
+   * @param sources The source files to be compiled (.c, .i, .s)
+   * @param objects The vector that is going to contain the compiled objects
+   */
   void compileObjects(const std::vector<std::filesystem::path> &sources,
-                      std::vector<std::filesystem::path> &objects) const;
+                      std::vector<std::filesystem::path> &objects,
+                      bool is_cpp) const;
 
   bool createStaticLib(const std::string &libPath,
                        const std::vector<std::filesystem::path> &objects) const;
 
   bool createSharedLib(const std::string &libPath,
-                       const std::vector<std::filesystem::path> &objects) const;
+                       const std::vector<std::filesystem::path> &objects,
+                       bool is_cpp) const;
 
   // void saveHeader(const File &header);
   // void saveBinary(const File &binary);
+  std::filesystem::path registry_path_ = getZCRootDir() / REGISTRY;
 
-  std::filesystem::path include_path_;
-  std::filesystem::path lib_path_;
+  std::filesystem::path include_path_ = getZCRootDir() / "include";
+  std::filesystem::path lib_path_ = getZCRootDir() / "lib";
 
   std::vector<Package> std_packages_;
   std::vector<Package> packages_;

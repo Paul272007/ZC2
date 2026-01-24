@@ -32,21 +32,21 @@ fi
 
 # Create arborescence
 echo -e "${BLUE}[1/5] Creating directory structure...${NC}"
-CONFIG_DIR="/etc/zc"
+ZC_DIR="$HOME/.zc"
 BIN="/usr/local/bin/zc"
-DEFAULT_LIB="/usr/local/lib/zc"
-DEFAULT_INCLUDE="/usr/local/include/zc"
+DEFAULT_LIB="$ZC_DIR/lib"
+DEFAULT_INCLUDE="$ZC_DIR/include"
 
 # Clean up any existing installation and configure permissions
 if [ "$EUID" -ne 0 ]; then
   sudo rm -f "$BIN"
-  sudo mkdir -p "$CONFIG_DIR"
+  sudo mkdir -p "$ZC_DIR"
   sudo mkdir -p "$DEFAULT_LIB"
   sudo mkdir -p "$DEFAULT_INCLUDE"
   sudo chmod 666 /etc/zc/config.json
 else
   rm -f "$BIN"
-  mkdir -p "$CONFIG_DIR"
+  mkdir -p "$ZC_DIR"
   mkdir -p "$DEFAULT_LIB"
   mkdir -p "$DEFAULT_INCLUDE"
   chmod 666 /etc/zc/config.json

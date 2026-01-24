@@ -560,3 +560,5 @@ vector<string> File::getInclusions(const Registry &reg) const
   clang_disposeIndex(index);
   return flags;
 }
+
+bool File::copy(const File &file) { return write(file.read()); }

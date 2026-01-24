@@ -18,6 +18,8 @@ enum ErrorCode
   // Configuration errors
   ZC_CONFIG_PARSING_ERROR = 30,
   ZC_CONFIG_NOT_FOUND = 31,
+  ZC_CONFIG_READING_ERROR = 32,
+  ZC_CONFIG_WRITING_ERROR = 33,
   // Command errors
   ZC_BAD_COMMAND = 40,
   ZC_UNSUPPORTED_LANGUAGE = 41,
@@ -34,7 +36,7 @@ class ZCError : public std::exception
 public:
   ZCError() = default;
   ZCError(ErrorCode code, const std::string &message);
-  void display() const;
+  void display(std::ostream &stream) const;
 
 private:
   ErrorCode code_ = SUCCESS;
