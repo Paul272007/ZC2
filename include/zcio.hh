@@ -156,6 +156,8 @@ public:
                     bool rowSeparatorThickness, bool colSeparatorThickness,
                     bool rowBorderThickness, bool colBorderThickness);
 
+  int getSize() const;
+
 private:
   void getWidths();
   void getChars();
@@ -209,3 +211,10 @@ private:
   bool rowSeparatorThickness_ = false;
   bool colSeparatorThickness_ = false;
 };
+
+void success(const std::string &msg);
+void debug(const std::string &msg);
+void info(const std::string &msg);
+void warning(const std::string &msg);
+
+bool ask(const std::string &question);

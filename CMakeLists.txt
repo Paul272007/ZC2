@@ -1,6 +1,6 @@
 # TODO : !! Works for Ubuntu, have to check for Arch
 cmake_minimum_required(VERSION 3.10)
-project(ZC VERSION 1.0 LANGUAGES C CXX)
+project(ZC VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
@@ -44,7 +44,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(json)
 
 # Source code files
-file(GLOB SOURCES "src/*.cc" "src/*.c")
+file(GLOB SOURCES "src/commands/*.cc" "src/objects/*.cc" "src/*.cc")
 
 # Create the executable
 add_executable(zc ${SOURCES})
@@ -58,5 +58,5 @@ target_link_libraries(zc PRIVATE
 )
 
 # Installation rules
-install(TARGETS zc DESTINATION bin)
-install(FILES etc/config.json etc/zc-lock.json DESTINATION /etc/zc)
+# install(TARGETS zc DESTINATION bin)
+# install(FILES etc/config.json etc/zc-lock.json DESTINATION /etc/zc)

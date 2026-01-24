@@ -1,8 +1,55 @@
 #include <iostream>
 
-#include <Table.hh>
+#include <zcio.hh>
 
 using namespace std;
+
+void success(const string &msg)
+{
+  cout << GREEN << "[SUCCESS] " << COLOR_RESET << msg << endl;
+}
+
+void debug(const string &msg)
+{
+  cout << CYAN << "[DEBUG]   " << COLOR_RESET << msg << endl;
+}
+
+void warning(const string &msg)
+{
+  cout << YELLOW << "[WARNING] " << COLOR_RESET << msg << endl;
+}
+
+void info(const string &msg)
+{
+  cout << BLUE << "[INFO]    " << COLOR_RESET << msg << endl;
+}
+
+bool ask(const string &question)
+{
+  string line;
+  cout << question << endl << "[Y/n] ";
+
+  while (getline(cin, line))
+  {
+    // 1. If the line is empty, we consider it as 'yes'
+    if (line.empty())
+    {
+      return true;
+    }
+
+    // 2. Otherwise, we check the first character
+    char input = toupper(line[0]);
+
+    if (input == 'Y')
+      return true;
+    if (input == 'N')
+      return false;
+
+    cout << "Error: unexpected token" << endl << "[Y/n] ";
+  }
+
+  return true; // Security if the input stream is closed
+}
 
 namespace
 {
@@ -20,7 +67,7 @@ Table::Table(int n_rows, int n_cols, bool hasRowHeaders, bool hasColHeaders,
     : n_rows_(n_rows), n_cols_(n_cols), hasRowHeaders_(hasRowHeaders),
       hasColHeaders_(hasColHeaders), current_line_(0), content_(content)
 {
-  // On doit allouer la taille des vecteurs internes avant de les utiliser
+  // Allocate internal vectors' size before using them
   max_widths_.resize(n_cols, 0);
   sizes_.resize(n_rows, std::vector<int>(n_cols, 0));
 }
@@ -285,6 +332,8 @@ void Table::middleLine()
   // Right border
   cout << chars_.borderCol_ << '\n';
 }
+
+int Table::getSize() const { return n_rows_; }
 
 void Table::draw()
 {
