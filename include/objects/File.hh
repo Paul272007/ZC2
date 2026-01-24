@@ -1,6 +1,9 @@
 #pragma once
 
 #include <filesystem>
+#include <map>
+#include <memory>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -23,15 +26,20 @@ enum Language
   OTHER
 };
 
+using Declarations = std::map<std::string, std::vector<std::string>>;
+
 class File
 {
 public:
   File(const std::string &path);
-  bool write(const std::string &content);
+  bool write(const std::string &content) const;
+  bool writeDeclarations(const Declarations &decls) const;
   std::string read() const;
   bool copy(const File &file);
   bool exists() const;
   bool remove() const;
+  void display(std::ostream &s) const;
+  std::unique_ptr<Declarations> parse() const;
 
   /**
    * @brief Get inclusions from file and return associated compiling flags
@@ -44,6 +52,7 @@ public:
   Language getLanguage_() const;
 
 private:
+  std::string getExt() const;
   std::filesystem::path path_;
   std::string filename_;
   Language language_;

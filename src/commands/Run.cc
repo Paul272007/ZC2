@@ -231,7 +231,6 @@ vector<string> Run::getInclusions() const
 
   for (const auto &f : files_)
   {
-    // TODO : in getInclusions : Registry::getFlagsforHeader(inclusions)
     vector<string> includes = f.getInclusions(registry_);
     for (const auto &include : includes)
       if (find(flags.begin(), flags.end(), include) == flags.end())

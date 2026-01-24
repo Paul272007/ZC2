@@ -48,7 +48,7 @@ public:
                    std::vector<std::filesystem::path> &objects,
                    std::vector<std::filesystem::path> &sources);
 
-  std::vector<std::string> getPackages() const;
+  std::vector<Package> getPackages() const;
 
   std::filesystem::path getIncludeDir() const;
 
