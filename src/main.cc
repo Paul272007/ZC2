@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 
   // ========================= INIT
   vector<string> new_files;
-  bool edit = false;
+  bool edit;
 
   /* ========================================================= *
    *                         SUBCOMMANDS                       *
@@ -70,6 +70,20 @@ int main(int argc, char *argv[])
 
   run->callback([&]() { command = make_unique<Run>(input_files, run_args, run_keep, run_plus, run_E, run_S, run_c); });
 
+
+  /*
+   * ========================== INIT ===============================
+   */
+
+  init->add_option("files", new_files, "The files to be created and initialized")->required();
+  init->add_option("--input,-i", input_files, "Files to be used as basis to write the new files");
+
+  init->add_flag("--force,-f", force, "Force writing into the files even if they already exist");
+  init->add_flag("--edit,-e", edit, "Edit the files once they are initialized");
+
+  init->callback([&]() { command = make_unique<Init>(new_files, force, input_files, edit); });
+
+
   /*
    * ========================== LIB ===============================
    */
@@ -91,19 +105,6 @@ int main(int argc, char *argv[])
   lib_create->add_flag("--force,-f", force, "Force installation even if the library already exists");
 
   lib_create->callback([&]() { command = make_unique<Create>(pkg_name, input_files, force); });
-
-  /*
-   * ========================== INIT ===============================
-   */
-
-  init->add_option("files", new_files, "The files to be created and initialized")->required();
-  init->add_option("--input,-i", input_files, "Files to be used as basis to write the new files");
-
-  init->add_flag("--force,-f", force, "Force writing into the files even if they already exist");
-  init->add_flag("--edit,-e", edit, "Edit the files once they are initialized");
-
-  init->callback([&]() { command = make_unique<Init>(new_files, force, input_files, edit); });
-
 
   /* ========================================================= *
    *                          PARSING                          *
