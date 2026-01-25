@@ -45,11 +45,11 @@ int Init::execute()
   vector<File> templates = getTemplates();
   for (const auto &f : files_)
   {
+    bool found = false;
     if (f.exists() && !force_)
       if (!ask("The file " + f.getPath_() +
                " already exists. Do you want to replace it ?"))
         continue;
-    bool found = false;
     for (const auto &t : templates)
     {
       if (f.getLanguage_() == C && !input_files_.empty())

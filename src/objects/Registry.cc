@@ -148,7 +148,7 @@ void Registry::indexPackage(const Package &package)
   ofstream output(registry_path_);
   if (!output.is_open())
     throw ZCError(ZC_CONFIG_WRITING_ERROR,
-                  "The configuration file couldn't be written: " +
+                  "The registry couldn't be written: " +
                       registry_path_.string());
   output << root.dump(4);
   output.close();
@@ -216,4 +216,58 @@ bool Registry::createSharedLib(const std::string &libPath,
   for (const auto &o : objects)
     cmd << o.string();
   return system(cmd.str().c_str()) == 0;
+}
+
+vector<string> Registry::unindexPackage(const std::string &pkg_name)
+{
+  vector<string> binaries;
+  // 1. Find package
+  auto it = find_if(packages_.begin(), packages_.end(),
+                    [&](const Package &p) { return p.name_ == pkg_name; });
+
+  // 2. Check if package was found
+  if (it != packages_.end())
+  {
+    binaries = it->binaries_;
+
+    // 3. Delete package
+    packages_.erase(it);
+  }
+  else
+  {
+    throw ZCError(ZC_PACKAGE_NOT_FOUND,
+                  "The package was not found: " + pkg_name);
+  }
+
+  nlohmann::json root;
+  root["libraries"] = packages_;
+
+  std::ofstream output(registry_path_);
+  if (!output.is_open())
+    throw ZCError(ZC_CONFIG_WRITING_ERROR,
+                  "The registry couldn't be written: " +
+                      registry_path_.string());
+
+  output << root.dump(4);
+  output.close();
+
+  return binaries;
+}
+
+bool Registry::removePackage(const std::string &pkg_name)
+{
+  vector<string> binaries = unindexPackage(pkg_name);
+
+  if (fs::exists(include_path_ / pkg_name))
+    fs::remove_all(include_path_ / pkg_name);
+  else
+    return false;
+  for (const auto &b : binaries)
+  {
+    if (fs::exists(lib_path_ / b))
+      fs::remove(b);
+    else
+      return false;
+  }
+  return true;
 }

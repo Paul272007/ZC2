@@ -15,3 +15,5 @@ std::filesystem::path getZCRootDir();
 
 std::string join(const std::vector<std::string> &v,
                  const std::string &separator);
+
+std::string upper(const std::string &s);

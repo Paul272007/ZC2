@@ -1,3 +1,4 @@
+#include <cctype>
 #include <cstdlib>
 #include <filesystem>
 #include <helpers.hh>
@@ -61,4 +62,14 @@ vector<string> split(const string &s, char delimiter)
     tokens.push_back(token);
   }
   return tokens;
+}
+
+std::string upper(const std::string &s)
+{
+  stringstream output;
+  for (const auto &c : s)
+  {
+    output << toupper(c);
+  }
+  return output.str();
 }

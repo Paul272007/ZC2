@@ -28,7 +28,9 @@ enum ErrorCode
   ZC_KEYBOARD_INTERRUPT = 50,
   ZC_OPERATIONS_ABORTED = 51,
   // Internal errors
-  ZC_INTERNAL_ERROR = 60
+  ZC_INTERNAL_ERROR = 60,
+  // Package errors
+  ZC_PACKAGE_NOT_FOUND = 70
 };
 
 class ZCError : public std::exception

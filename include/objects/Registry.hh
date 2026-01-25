@@ -51,6 +51,8 @@ public:
                    std::vector<std::filesystem::path> &objects,
                    std::vector<std::filesystem::path> &sources, bool is_cpp);
 
+  bool removePackage(const std::string &pkg_name);
+
   std::vector<Package> getPackages() const;
 
   std::filesystem::path getIncludeDir() const;
@@ -66,6 +68,8 @@ private:
    * @brief Index the Package in the configuration file
    */
   void indexPackage(const Package &package);
+
+  std::vector<std::string> unindexPackage(const std::string &pkg_name);
 
   /**
    * @brief Compile source files to object files

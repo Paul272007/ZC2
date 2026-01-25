@@ -9,6 +9,7 @@
 #include <commands/Init.hh>
 #include <commands/Lib/Create.hh>
 #include <commands/Lib/List.hh>
+#include <commands/Lib/Remove.hh>
 #include <commands/Project.hh>
 #include <commands/Run.hh>
 #include <objects/ZCError.hh>
@@ -42,6 +43,9 @@ int main(int argc, char *argv[])
 
   // ========================= LIB CREATE
   string pkg_name;
+
+  // ========================= LIB REMOVE
+  vector<string> pkgs;
 
   // ========================= INIT
   vector<string> new_files;
@@ -97,7 +101,10 @@ int main(int argc, char *argv[])
   project->add_option("language", language, "The language of the project being created")->required();
   project->add_option("project_name", project_name, "The name of the project being created")->required();
 
-  project->callback([&]() { command = make_unique<Project>(language, project_name); });
+  project->add_flag("--force,-f", force, "Force initializing project even if it already exists");
+  project->add_flag("--edit,-e", edit, "Edit the project once it is initialized");
+
+  project->callback([&]() { command = make_unique<Project>(language, project_name, force, edit); });
 
 
   /*
@@ -108,6 +115,7 @@ int main(int argc, char *argv[])
 
   auto lib_list   = lib->add_subcommand("list", "List all installed libraries");
   auto lib_create = lib->add_subcommand("create", "Create a library and install it on the system");
+  auto lib_remove = lib->add_subcommand("remove", "Remove an installed library");
 
   // ========================== LIB LIST ===============================
 
@@ -121,6 +129,13 @@ int main(int argc, char *argv[])
   lib_create->add_flag("--force,-f", force, "Force installation even if the library already exists");
 
   lib_create->callback([&]() { command = make_unique<Create>(pkg_name, input_files, force); });
+
+  // ========================== LIB REMOVE ===============================
+
+  lib_remove->add_option("targets", pkgs, "The packages to be removed")->required();
+
+  lib_remove->callback([&]() { command = make_unique<Remove>(pkgs); });
+
 
   /* ========================================================= *
    *                          PARSING                          *
