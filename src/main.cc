@@ -9,6 +9,7 @@
 #include <commands/Init.hh>
 #include <commands/Lib/Create.hh>
 #include <commands/Lib/List.hh>
+#include <commands/Project.hh>
 #include <commands/Run.hh>
 #include <objects/ZCError.hh>
 #include <zcio.hh>
@@ -46,14 +47,19 @@ int main(int argc, char *argv[])
   vector<string> new_files;
   bool edit;
 
+  //  ========================= PROJECT
+  string language;
+  string project_name;
+
   /* ========================================================= *
    *                         SUBCOMMANDS                       *
    * ========================================================= */
 
   // clang-format off
-  auto run  = app.add_subcommand("run", "Compile and execute C/C++ file(s)");
-  auto lib  = app.add_subcommand("lib", "Operations on libraries");
-  auto init = app.add_subcommand("init", "Initialize file(s) with a template");
+  auto run     = app.add_subcommand("run", "Compile and execute C/C++ file(s)");
+  auto lib     = app.add_subcommand("lib", "Operations on libraries");
+  auto init    = app.add_subcommand("init", "Initialize file(s) with a template");
+  auto project = app.add_subcommand("project", "Initiliaze a new C/C++ project");
 
   /*
    * ========================== RUN ===============================
@@ -82,6 +88,16 @@ int main(int argc, char *argv[])
   init->add_flag("--edit,-e", edit, "Edit the files once they are initialized");
 
   init->callback([&]() { command = make_unique<Init>(new_files, force, input_files, edit); });
+
+
+  /*
+   * ========================== PROJECT ===============================
+   */
+
+  project->add_option("language", language, "The language of the project being created")->required();
+  project->add_option("project_name", project_name, "The name of the project being created")->required();
+
+  project->callback([&]() { command = make_unique<Project>(language, project_name); });
 
 
   /*

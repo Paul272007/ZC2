@@ -6,35 +6,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-include_directories(include)
-include_directories(SYSTEM external)
+# --- Dependencies ---
 
-# Find LLVM and Clang (LLVM added for Ubuntu)
-find_package(LLVM REQUIRED)
-find_package(Clang REQUIRED)
-
-message(STATUS "Found LLVM ${LLVM_PACKAGE_VERSION}")
-message(STATUS "Using LLVMConfig.cmake in: ${LLVM_DIR}")
-message(STATUS "Using ClangConfig.cmake in: ${Clang_DIR}")
-
-include_directories(${LLVM_INCLUDE_DIRS})
-include_directories(${Clang_INCLUDE_DIRS})
-
-# find_library(CLANG_LIB NAMES clang clang-18)
-# find_path(CLANG_INCLUDE_DIRS NAMES clang-c/Index.h PATH_SUFFIXES llvm-18/include clang)
-
-# if(NOT CLANG_LIB OR NOT CLANG_INCLUDE_DIRS)
-#   message(FATAL_ERROR "Clang library or include directories not found.")
-# endif()
-#
-# message(STATUS "Found libclang: ${CLANG_LIB}")
-# message(STATUS "Found clang headers: ${CLANG_INCLUDE_DIR}")
-
-# Add compilation flags
-separate_arguments(LLVM_DEFINITIONS_LIST NATIVE_COMMAND "${LLVM_DEFINITIONS}")
-add_definitions(${LLVM_DEFINITIONS_LIST})
-
-# Fetch json parsing library
+# 1. Fetch JSON (Nlohmann)
 include(FetchContent)
 FetchContent_Declare(
     json
@@ -43,21 +17,55 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(json)
 
-# Source code files
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
-    "src/*.cc"
+# 2. Find LLVM/Clang
+# On cherche d'abord les paquets pour les headers
+find_package(LLVM REQUIRED)
+find_package(Clang REQUIRED)
+
+message(STATUS "LLVM found: ${LLVM_PACKAGE_VERSION}")
+
+include_directories(SYSTEM external)
+# Inclusion des headers systèmes de LLVM/Clang
+include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${Clang_INCLUDE_DIRS})
+add_definitions(${LLVM_DEFINITIONS})
+
+# 3. Find specifically the library binary (libclang.so / .dylib)
+# C'est important car target_link_libraries a besoin du chemin vers le .so
+find_library(CLANG_LIB
+    NAMES clang libclang clang-18 clang-17 clang-16 clang-15
+    HINTS ${LLVM_LIBRARY_DIRS} ${Clang_LIBRARY_DIRS}
 )
-# Create the executable
+
+if(NOT CLANG_LIB)
+  message(FATAL_ERROR "Could not find libclang shared library.")
+endif()
+message(STATUS "Found libclang: ${CLANG_LIB}")
+
+# --- Build ---
+
+# Source files
+file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cc")
+
 add_executable(zc ${SOURCES})
 
-# Link libraries
-target_include_directories(zc PRIVATE ${CLANG_INCLUDE_DIRS})
+# Include directories for your project
+target_include_directories(zc PRIVATE include)
+
+# Link
 target_link_libraries(zc PRIVATE
   nlohmann_json::nlohmann_json
   ${CLANG_LIB}
-  LLVM
+  # Parfois nécessaire sous Linux pour LLVM :
+  pthread
+  dl
+  tinfo
 )
 
-# Installation rules
-# install(TARGETS zc DESTINATION bin)
-# install(FILES etc/config.json etc/zc-lock.json DESTINATION /etc/zc)
+# --- Installation Rules (INDISPENSABLE pour install.sh) ---
+
+# Installe le binaire dans /usr/local/bin (par défaut)
+install(TARGETS zc DESTINATION bin)
+
+# Note: On n'installe PAS la config ici car votre script shell
+# gère la config utilisateur dans ~/.zc

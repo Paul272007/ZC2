@@ -49,6 +49,7 @@ int Init::execute()
       if (!ask("The file " + f.getPath_() +
                " already exists. Do you want to replace it ?"))
         continue;
+    bool found = false;
     for (const auto &t : templates)
     {
       if (f.getLanguage_() == C && !input_files_.empty())
@@ -56,16 +57,21 @@ int Init::execute()
         if (!writeCDecls(f))
           throw ZCError(ZC_WRITING_ERROR,
                         "The file couldn't be written: " + f.getPath_());
+        found = true;
+        break;
       }
-      else if (f.getExt() == t.getExt())
+      else if (f.getExt() == t.getExt() ||
+               (f.getLanguage_() != OTHER &&
+                f.getLanguage_() == t.getLanguage_()))
+      {
         f.copy(t);
-      else if (f.getLanguage_() != OTHER &&
-               f.getLanguage_() == t.getLanguage_())
-        f.copy(t);
-      else
-        throw ZCError(ZC_UNSUPPORTED_LANGUAGE,
-                      "No template is available for the file: " + f.getPath_());
+        found = true;
+        break;
+      }
     }
+    if (!found)
+      throw ZCError(ZC_UNSUPPORTED_LANGUAGE,
+                    "No template is available for the file: " + f.getPath_());
   }
   if (settings_.edit_on_init_ || edit_)
   {
