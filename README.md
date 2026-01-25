@@ -18,14 +18,21 @@ Simply run `./uninstall.sh` with root privileges from the root of the repository
 
 ## Commands return codes
 
-- `-1`: No idea what the error was
-- `0`: Command exited successfully
-- `1`: Compilation/execution failed
-- `2`: File not found error
-- `3`: Configuration error
-- `4`: Not an error yet
-- `5`: Bad command
-- `6`: File execution error
-- `7`: File has unsupported extension/type
-- `8`: Keyboard interruption error
-- `9`: Error while writing into a file
+- `-1`: No idea what the error was (unexpected error)
+- `0`: Success
+- `10`: Compilation error
+- `11`: Program execution error
+- `20`: File not found
+- `21`: File writing error
+- `22`: File parsing error
+- `30`: Configuration file parsing error
+- `31`: Configuration file not found
+- `32`: Configuration file reading error
+- `33`: Configuration file writing writing error
+- `40`: Bad command
+- `41`: Unsupported language given
+- `42`: Incompatible flags given
+- `50`: Keyboard interrupt
+- `51`: Operations were aborted
+- `60`: Internal error
+- `70`: Package not found
