@@ -13,20 +13,22 @@
 class Settings
 {
 public:
+  /**
+   * @brief Get an instance
+   *
+   * @return A Settings instance
+   */
   static Settings &getInstance();
 
+  /**
+   * @brief Load the configuration file
+   */
   void load();
+
+  /**
+   * @brief Write the current configuration into the configuration file
+   */
   void write();
-
-  /**
-   * @brief Get the user's home directory
-   */
-  std::filesystem::path getHomeDir() const;
-
-  /**
-   * @brief Get the root directory of zc
-   */
-  std::filesystem::path getRootDir() const;
 
   std::filesystem::path config_path_ = getZCRootDir() / CONFIG;
 
@@ -44,5 +46,8 @@ public:
   bool edit_on_init_ = false;
 
 private:
+  /**
+   * @brief Default constructor
+   */
   Settings() = default;
 };

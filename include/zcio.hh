@@ -48,7 +48,7 @@
 #define BG_CYAN    "\033[46m"
 #define BG_WHITE   "\033[47m"
 
-// Special characters (e.g. borders / lines)
+// Box elements
 #define LIGHT_VERTICAL_LEFT                 "\u2524"
 #define VERTICAL_SINGLE_LEFT_DOUBLE         "\u2561"
 #define VERTICAL_DOUBLE_LEFT_SINGLE         "\u2562"
@@ -96,9 +96,6 @@
 #define FONT_HEIGHT 5
 #define FONT_WIDTH 6
 
-// Ascii art font
-extern const char UPPER[26][FONT_HEIGHT][FONT_WIDTH];
-
 /**
  * @brief Contains all characters corresponding to the width chosen by the
  * user
@@ -128,13 +125,20 @@ struct TableChars
   std::string bottomRightCorner_;
 };
 
-/**
- * @brief Table structure
- */
 class Table
 {
 public:
   using Chars = struct TableChars;
+
+  /**
+   * @brief Create a Table instance
+   *
+   * @param n_rows The table's number of rows
+   * @param n_cols The table's number of columns
+   * @param hasRowHeaders Whether or not the table has row headers
+   * @param hasColHeaders Whether or not the table has column headers
+   * @param content The content of the table
+   */
   Table(int n_rows, int n_cols, bool hasRowHeaders, bool hasColHeaders,
         const std::vector<std::vector<std::string>> &content);
   ~Table();
@@ -156,15 +160,49 @@ public:
                     bool rowSeparatorThickness, bool colSeparatorThickness,
                     bool rowBorderThickness, bool colBorderThickness);
 
+  /**
+   * @brief Get the table's size
+   *
+   * @return The table's size
+   */
   int getSize() const;
 
 private:
+  /**
+   * @brief Get the width of each column of the Table
+   */
   void getWidths();
+
+  /**
+   * @brief Get the characters of the table borders corresponding to the chosen
+   * border thicknesses
+   */
   void getChars();
+
+  /**
+   * @brief Draw the Table's top line
+   */
   void topLine();
+
+  /**
+   * @brief Draw a table's middle line with it's content
+   */
   void middleLine();
+
+  /**
+   * @brief Draw the Table's bottom line
+   */
   void bottomLine();
+
+  /**
+   * @brief Draw the separator between the column headers and the content of the
+   * table
+   */
   void columnHeaderSeparator();
+
+  /**
+   * @brief Draw the separator between each line
+   */
   void separator();
 
   /**
@@ -212,9 +250,38 @@ private:
   bool colSeparatorThickness_ = false;
 };
 
+/**
+ * @brief Print out a formatted success message
+ *
+ * @param msg The message to be displayed
+ */
 void success(const std::string &msg);
+
+/**
+ * @brief Print out a formatted debugging message
+ *
+ * @param msg The message to be displayed
+ */
 void debug(const std::string &msg);
+
+/**
+ * @brief Print out a formatted information
+ *
+ * @param msg The message to be displayed
+ */
 void info(const std::string &msg);
+
+/**
+ * @brief Print out a formatted warning
+ *
+ * @param msg The message to be displayed
+ */
 void warning(const std::string &msg);
 
+/**
+ * @brief Ask the question to the user and return the user's answer
+ *
+ * @param question The question to be asked
+ * @return true if the user responded Y and false otherwise
+ */
 bool ask(const std::string &question);

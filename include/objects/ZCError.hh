@@ -36,9 +36,32 @@ enum ErrorCode
 class ZCError : public std::exception
 {
 public:
+  /**
+   * @brief Default constructor just to not get errors when throwing empty
+   * errors
+   */
   ZCError() = default;
+
+  /**
+   * @brief Create ZCError instance
+   *
+   * @param code The code corresponding to the error type
+   * @param message A message that explains the error
+   */
   ZCError(ErrorCode code, const std::string &message);
+
+  /**
+   * @brief Display error to stream
+   *
+   * @param stream The stream in which the error is displayed
+   */
   void display(std::ostream &stream) const;
+
+  /**
+   * @brief Get the error code as an int
+   *
+   * @return code_ as an int
+   */
   int getCode_() const;
 
 private:
@@ -46,4 +69,10 @@ private:
   std::string message_ = "Success";
 };
 
+/**
+ * @brief << overload for ZCError
+ *
+ * @param stream The stream in which the error is written
+ * @param zcerror The error to be displayed
+ */
 std::ostream &operator<<(std::ostream &stream, const ZCError &zcerror);

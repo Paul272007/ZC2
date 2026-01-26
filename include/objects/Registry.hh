@@ -27,10 +27,17 @@ struct Package
 class Registry
 {
 public:
+  /**
+   * @brief Get an instance
+   *
+   * There can't be more than one instance at a time
+   *
+   * @return A Registry instance
+   */
   static Registry &getInstance();
 
   /**
-   * @brief Load the Registry
+   * @brief Load the Registry's content
    */
   void load();
 
@@ -39,29 +46,55 @@ public:
    * object files)
    * 1. Create a subdirectory in the ZC include dir
    * 2. Copy the header files into this directory
-   * 3. Compile the object files into a static / dynamic library
+   * 3. Compile the object files into a static and dynamic library
    * 4. Put the binaries into the lib directory
    *
    * @param package The package configuration
+   * @param force Force installation even if the library already exists
    * @param headers The library's header files
    * @param objects The library's object files
+   * @param source The library's source files
+   * @param bool Whether library is C++ or not
    */
   void savePackage(Package &package, bool force,
                    std::vector<std::filesystem::path> &headers,
                    std::vector<std::filesystem::path> &objects,
                    std::vector<std::filesystem::path> &sources, bool is_cpp);
 
+  /**
+   * @brief Uninstall package and remove it from index
+   *
+   * @param pkg_name The target package
+   * @return Whether or not it was successful
+   */
   bool removePackage(const std::string &pkg_name);
 
+  /**
+   * @brief Get all the packages of the registry
+   */
   std::vector<Package> getPackages() const;
 
+  /**
+   * @brief Get the include path
+   */
   std::filesystem::path getIncludeDir() const;
 
+  /**
+   * @brief Get the binaries path
+   */
   std::filesystem::path getLibDir() const;
 
+  /**
+   * @brief Create a Table containing all the packages, ready to be displayed
+   *
+   * @return The Table
+   */
   Table packagesTable() const;
 
 private:
+  /**
+   * @brief Default constructor
+   */
   Registry() = default;
 
   /**
@@ -69,6 +102,11 @@ private:
    */
   void indexPackage(const Package &package);
 
+  /**
+   * @brief Unindex package from registry
+   *
+   * @param pkg_name The name of the package to be unindexed
+   */
   std::vector<std::string> unindexPackage(const std::string &pkg_name);
 
   /**
@@ -81,20 +119,35 @@ private:
                       std::vector<std::filesystem::path> &objects,
                       bool is_cpp) const;
 
+  /**
+   * @brief Create a static library
+   *
+   * @param libPath The path of the future binary
+   * @param objects The objects to be compiled
+   * @return whether it worked or not
+   */
   bool createStaticLib(const std::string &libPath,
                        const std::vector<std::filesystem::path> &objects) const;
 
+  /**
+   * @brief Create a shared library
+   *
+   * @param libPath The path of the future library
+   * @param objects The objects to be compiled
+   * @param is_cpp Whether or not the code is C++
+   * @return whether it worked or not
+   */
   bool createSharedLib(const std::string &libPath,
                        const std::vector<std::filesystem::path> &objects,
                        bool is_cpp) const;
 
-  // void saveHeader(const File &header);
-  // void saveBinary(const File &binary);
+  std::vector<Package> packages_;
+  std::vector<Package> std_packages_;
+  // TODO : add std packages to lib list
+  // TODO : add std package detection when compiling
+
   std::filesystem::path registry_path_ = getZCRootDir() / REGISTRY;
 
   std::filesystem::path include_path_ = getZCRootDir() / "include";
   std::filesystem::path lib_path_ = getZCRootDir() / "lib";
-
-  std::vector<Package> std_packages_;
-  std::vector<Package> packages_;
 };
