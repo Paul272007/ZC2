@@ -1,6 +1,6 @@
 # TODO : !! Works for Ubuntu, have to check for Arch
 cmake_minimum_required(VERSION 3.12)
-project(ZC VERSION 1.0 LANGUAGES CXX)
+project(ZC VERSION 1.0 LANGUAGES C CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)

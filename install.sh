@@ -21,7 +21,7 @@ elif [ -f /etc/redhat-release ] || [ -f /etc/fedora-release ]; then
   sudo dnf install -y clang clang-devel cmake make git libcurl-devel zlib-devel
 elif [ -f /etc/arch-release ]; then
   echo "Detected Arch-based system."
-  sudo pacman -S --noconfirm clang cmake make git
+  sudo pacman -S --needed --noconfirm clang cmake make git llvm libedit
 elif [ -f /etc/os-release ] && grep -q "suse" /etc/os-release; then
   echo "Installation for openSUSE..."
   sudo zypper install -y clang clang-devel cmake make git zlib-devel libcurl-devel
