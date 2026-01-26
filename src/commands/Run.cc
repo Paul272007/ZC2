@@ -20,8 +20,9 @@ namespace fs = std::filesystem;
 Run::Run(const std::vector<std::string> &files,
          const std::vector<std::string> &args, bool keep, bool plus,
          bool preprocess, bool compile, bool assemble)
-    : plus_(plus), settings_(Settings::getInstance()),
-      registry_(Registry::getInstance())
+    : keep_(keep), plus_(plus), settings_(Settings::getInstance()),
+      registry_(Registry::getInstance()),
+      mode_(getMode(preprocess, compile, assemble))
 {
   // 1. Check if CPP was given and that files have correct extensions
   string badFile;

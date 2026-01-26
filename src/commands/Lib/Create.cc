@@ -71,9 +71,3 @@ int Create::execute()
 
   return 0;
 }
-
-bool Create::isShared() const
-{
-  return 0;
-  // return output_name_;
-}

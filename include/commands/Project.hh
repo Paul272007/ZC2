@@ -13,11 +13,28 @@
 class Project : public Command
 {
 public:
+  /**
+   * @brief Create a new project in a new folder using ZC
+   *
+   * @param language The language of the new project (C or C++)
+   * @param project_name The name of the new project / folder
+   * @param force Whether to force creating project even if it already exists
+   * @param edit Whether to edit the project once created
+   */
   Project(const std::string &language, const std::string &project_name,
           bool force, bool edit);
+
+  /**
+   * @brief Execute command
+   *
+   * @return Exit code
+   */
   virtual int execute() override;
 
 private:
+  /**
+   * @brief Fetch all templates from the project templates folder
+   */
   std::vector<std::string> getProjectTemplates();
 
   std::vector<std::string> project_templates_;
