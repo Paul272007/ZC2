@@ -74,5 +74,41 @@ else
   cmake --install .
 fi
 
+echo -e "${BLUE}[5/5] Configuring Clangd...${NC}"
+
+if [ -n "$SUDO_USER" ]; then
+  REAL_USER="$SUDO_USER"
+  REAL_HOME=$(getent passwd "$SUDO_USER" | cut -d: -f6)
+else
+  REAL_USER="$USER"
+  REAL_HOME="$HOME"
+fi
+
+CLANGD_DIR="$REAL_HOME/.config/clangd"
+CLANGD_CONFIG="$CLANGD_DIR/config.yaml"
+ZC_INCLUDE_PATH="$REAL_HOME/.zc/include"
+
+if [ ! -d "$CLANGD_DIR" ]; then
+  mkdir -p "$CLANGD_DIR"
+  chown "$REAL_USER:$(id -gn "$REAL_USER")" "$CLANGD_DIR"
+fi
+
+CONFIG_BLOCK="CompileFlags:
+  Add: [-I$ZC_INCLUDE_PATH]"
+
+if [ ! -f "$CLANGD_CONFIG" ]; then
+  echo "$CONFIG_BLOCK" >"$CLANGD_CONFIG"
+  echo "Created clangd configuration."
+else
+  if grep -Fq "$ZC_INCLUDE_PATH" "$CLANGD_CONFIG"; then
+    echo "Clangd configuration already present."
+  else
+    echo -e "\n---\n$CONFIG_BLOCK" >>"$CLANGD_CONFIG"
+    echo "Appended to existing clangd configuration."
+  fi
+fi
+
+chown "$REAL_USER:$(id -gn "$REAL_USER")" "$CLANGD_CONFIG"
+
 echo -e "${GREEN}===== ZC installed successfully! =====${NC}"
 exit 0

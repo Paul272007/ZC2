@@ -16,6 +16,8 @@ Simply run `./uninstall.sh` with root privileges from the root of the repository
 
 ## Usage
 
+You can compile and run C or C++ source files without having to worry about linking libraries with `zc run <files>`
+
 ## Commands return codes
 
 - `-1`: No idea what the error was (unexpected error)
@@ -29,6 +31,7 @@ Simply run `./uninstall.sh` with root privileges from the root of the repository
 - `31`: Configuration file not found
 - `32`: Configuration file reading error
 - `33`: Configuration file writing writing error
+- `34`: Configuration file is not filled correctly
 - `40`: Bad command
 - `41`: Unsupported language given
 - `42`: Incompatible flags given
