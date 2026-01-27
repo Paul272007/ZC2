@@ -91,11 +91,15 @@ int Run::execute()
     return 0;
   }
 
-  if (settings_.clear_before_run_)
-    system("clear");
-
   // 4. Execute program
-  info("Executing program");
+  if (settings_.clear_before_run_)
+  {
+    int clear_res = system("clear");
+    if (clear_res != 0)
+      throw ZCError(ZC_INTERNAL_ERROR, "Unexpected terminal clearing error");
+  }
+
+  info("Executing program...");
   string exec_cmd = fs::absolute(output_name).string();
 
   for (const auto &arg : args_)
@@ -108,11 +112,18 @@ int Run::execute()
     fs::remove(output_name);
 
 #ifdef DEBUG_MODE
+    cout << endl;
     debug("Temporary file removed: " + output_name);
 #endif
   }
 
-  return (run_res == 0) ? 0 : 6;
+  if (run_res == 0)
+    return 0;
+
+  stringstream msg;
+  msg << "Program exited with code " << run_res;
+  throw ZCError(ZC_EXECUTION_ERROR, msg.str());
+  return run_res;
 }
 
 Mode Run::getMode(bool preprocess, bool compile, bool assemble) const
