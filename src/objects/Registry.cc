@@ -25,8 +25,24 @@ Registry &Registry::getInstance()
   return instance;
 }
 
+void from_json(const json &j, StdPackage &p)
+{
+  if (!j.is_array())
+    return;
+  if (j.size() < 4)
+    throw ZCError(ZC_CONFIG_CONTENT_ERROR, "Not enough values given.");
+  j.at(0).get_to(p.name_);     // Index 0: "math"
+  j.at(1).get_to(p.headers_);  // Index 1: ["math.h"]
+  j.at(2).get_to(p.binaries_); // Index 2: []
+  j.at(3).get_to(p.flags_);    // Index 3: "-lm"
+}
+
 void from_json(const json &j, Package &p)
 {
+  if (!j.is_array())
+    return;
+  if (j.size() < 6)
+    throw ZCError(ZC_CONFIG_CONTENT_ERROR, "Not enough values given.");
   j.at(0).get_to(p.name_);     // Index 0: "math"
   j.at(1).get_to(p.headers_);  // Index 1: ["math.h"]
   j.at(2).get_to(p.binaries_); // Index 2: []
@@ -72,7 +88,10 @@ void Registry::load()
                   "The configuration file couldn't be parsed: " +
                       registry_path_.string() + ": " + e.what());
   }
-  vector<Package> packages = json_conf.at("libraries").get<vector<Package>>();
+  if (json_conf.contains("libraries"))
+    packages_ = json_conf.at("libraries").get<vector<Package>>();
+  if (json_conf.contains("std_libraries"))
+    std_packages_ = json_conf.at("std_libraries").get<vector<StdPackage>>();
 }
 
 void Registry::savePackage(Package &package, bool force,
@@ -160,9 +179,23 @@ Table Registry::packagesTable() const
                                    "Compiling flags", "Headers", "Binaries"}};
 
   for (const auto &p : packages_)
-    str_pkgs.push_back({p.name_, p.author_, p.version_, p.flags_});
+    str_pkgs.push_back({p.name_, p.author_, p.version_, p.flags_,
+                        join(p.headers_, ", "), join(p.binaries_, ", ")});
 
   return Table(packages_.size() + 1, N_ATTR_PACKAGE, false, true, str_pkgs);
+}
+
+Table Registry::stdPackagesTable() const
+{
+  vector<vector<string>> str_pkgs{
+      {"Package name", "Compiling flags", "Headers", "Binaries"}};
+
+  for (const auto &p : std_packages_)
+    str_pkgs.push_back(
+        {p.name_, p.flags_, join(p.headers_, ", "), join(p.binaries_, ", ")});
+
+  return Table(std_packages_.size() + 1, N_ATTR_STD_PACKAGE, false, true,
+               str_pkgs);
 }
 
 fs::path Registry::getIncludeDir() const { return include_path_; }

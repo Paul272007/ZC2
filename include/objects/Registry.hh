@@ -11,6 +11,7 @@
 
 #define REGISTRY "registry.json"
 #define N_ATTR_PACKAGE 6
+#define N_ATTR_STD_PACKAGE 4
 
 struct Package
 {
@@ -21,6 +22,14 @@ struct Package
   std::vector<std::string> headers_;
   std::vector<std::string> binaries_;
 
+  std::string flags_;
+};
+
+struct StdPackage
+{
+  std::string name_;
+  std::vector<std::string> headers_;
+  std::vector<std::string> binaries_;
   std::string flags_;
 };
 
@@ -91,6 +100,14 @@ public:
    */
   Table packagesTable() const;
 
+  /**
+   * @brief Create a Table containing all the standard packages, ready to be
+   * displayed
+   *
+   * @return The Table
+   */
+  Table stdPackagesTable() const;
+
 private:
   /**
    * @brief Default constructor
@@ -142,7 +159,7 @@ private:
                        bool is_cpp) const;
 
   std::vector<Package> packages_;
-  std::vector<Package> std_packages_;
+  std::vector<StdPackage> std_packages_;
   // TODO : add std packages to lib list
   // TODO : add std package detection when compiling
 

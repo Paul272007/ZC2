@@ -9,7 +9,7 @@ public:
   /**
    * @brief Display installed libraries
    */
-  List();
+  List(bool display_std);
 
   /**
    * @brief Execute command
@@ -19,5 +19,6 @@ public:
   virtual int execute() override;
 
 private:
+  const bool display_std_ = false;
   const Registry &registry_;
 };

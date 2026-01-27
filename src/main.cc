@@ -41,6 +41,9 @@ int main(int argc, char *argv[])
 
   vector<string> run_args;
 
+  // ========================= LIB LIST
+  bool display_std = false;
+
   // ========================= LIB CREATE
   string pkg_name;
 
@@ -119,7 +122,9 @@ int main(int argc, char *argv[])
 
   // ========================== LIB LIST ===============================
 
-  lib_list->callback([&]() { command = make_unique<List>(); });
+  lib_list->add_flag("--std,-s", display_std, "Also display standard libraries");
+
+  lib_list->callback([&]() { command = make_unique<List>(display_std); });
 
   // ========================== LIB CREATE ===============================
 
