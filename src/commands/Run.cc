@@ -91,8 +91,8 @@ int Run::execute()
     return 0;
   }
 
-  // if (config_.clear_before_run_)
-  //   system("clear");
+  if (settings_.clear_before_run_)
+    system("clear");
 
   // 4. Execute program
   info("Executing program");
