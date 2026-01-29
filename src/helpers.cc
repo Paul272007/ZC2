@@ -82,7 +82,7 @@ fs::path getProjectRoot()
 
   while (true)
   {
-    if (fs::exists(current / ".zc"))
+    if (fs::exists(current / ".zcinfo"))
       return current;
 
     if (current == current.root_path() || current == current.parent_path())
