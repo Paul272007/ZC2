@@ -34,7 +34,10 @@ enum ErrorCode
   ZC_PACKAGE_NOT_FOUND = 70,
   // Build errors
   ZC_NO_SOURCE_FILES = 80,
-  ZC_CMAKE_ERROR = 81
+  ZC_NOT_A_ZC_PROJECT = 81,
+  // External errors
+  ZC_GIT_ERROR = 90,
+  ZC_CMAKE_ERROR = 91
 };
 
 class ZCError : public std::exception

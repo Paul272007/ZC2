@@ -5,6 +5,8 @@
 #include <sstream>
 #include <vector>
 
+#include <objects/ZCError.hh>
+
 using namespace std;
 namespace fs = std::filesystem;
 
@@ -72,4 +74,22 @@ std::string upper(const std::string &s)
     output << toupper(c);
   }
   return output.str();
+}
+
+fs::path getProjectRoot()
+{
+  fs::path current = fs::current_path();
+
+  while (true)
+  {
+    if (fs::exists(current / ".zc"))
+      return current;
+
+    if (current == current.root_path() || current == current.parent_path())
+      break;
+
+    current = current.parent_path();
+  }
+  throw ZCError(ZC_NOT_A_ZC_PROJECT,
+                "This directory is not inside a ZC project");
 }

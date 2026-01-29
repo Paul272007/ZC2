@@ -204,6 +204,11 @@ fs::path Registry::getLibDir() const { return lib_path_; }
 
 std::vector<Package> Registry::getPackages() const { return packages_; }
 
+std::vector<StdPackage> Registry::getStdPackages() const
+{
+  return std_packages_;
+}
+
 void Registry::compileObjects(const std::vector<std::filesystem::path> &sources,
                               std::vector<std::filesystem::path> &objects,
                               bool is_cpp) const

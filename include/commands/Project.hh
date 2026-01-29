@@ -23,7 +23,7 @@ public:
    * @param edit Whether to edit the project once created
    */
   Project(const std::string &language, const std::string &project_name,
-          bool force, bool edit);
+          bool force, bool edit, bool git);
 
   /**
    * @brief Execute command
@@ -41,8 +41,10 @@ private:
   std::vector<std::string> project_templates_;
   const std::string language_;
   const std::string project_name_;
+  const std::filesystem::path project_path_;
   const bool force_;
   const bool edit_;
+  const bool git_;
   Settings &settings_;
   ProjectsRegistry &pregistry_;
   std::filesystem::path project_templates_path_ =

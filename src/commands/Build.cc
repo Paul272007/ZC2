@@ -19,11 +19,29 @@ Build::Build(bool force, bool release_mode)
 {
 }
 
+vector<File> Build::scanSources(const fs::path &root) const
+{
+  vector<File> sources;
+  fs::path src_code(root / "src");
+  if (fs::exists(src_code) && fs::is_directory(src_code))
+  {
+    for (const auto &entry : fs::recursive_directory_iterator(src_code))
+    {
+      File f(entry.path());
+      if (f.getLanguage_() == C || f.getLanguage_() == CPP)
+        sources.push_back(f);
+    }
+  }
+  return sources;
+}
+
 int Build::execute()
 {
-  auto sources = scanSources();
+  fs::path project_root = getProjectRoot();
+
+  auto sources = scanSources(project_root);
   if (sources.empty())
-    throw ZCError(ZC_NO_SOURCE_FILES, "No source file was detected");
+    throw ZCError(ZC_NO_SOURCE_FILES, "No source file were detected");
 
   auto libs = detectLibraries(sources);
 

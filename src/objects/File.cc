@@ -530,13 +530,15 @@ vector<string> File::getInclusions(const Registry &reg) const
     {
       for (const auto &package : reg.getPackages())
       {
-        // Si l'inclusion contient le nom de la lib (ex: "math" dans "math.h")
         if (inc.find(package.name_) != string::npos)
         {
-          // TODO : in getInclusions : Registry::getFlagsforHeader(inclusions)
+          // TODO : Registry::getFlagsforHeader(inclusions) ?
           flags.push_back(package.flags_);
         }
       }
+      for (const auto &std_package : reg.getStdPackages())
+        if (inc.find(std_package.name_) != string::npos)
+          flags.push_back(std_package.flags_);
     }
 
     clang_disposeTranslationUnit(unit);

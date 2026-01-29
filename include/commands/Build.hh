@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 #include <vector>
 
@@ -18,7 +19,7 @@ private:
   bool generateCMakeLists(const std::vector<File> &sources,
                           const std::vector<std::string> &libs);
 
-  std::vector<File> scanSources() const;
+  std::vector<File> scanSources(const std::filesystem::path &root) const;
   std::vector<std::string>
   detectLibraries(const std::vector<File> &sources) const;
 

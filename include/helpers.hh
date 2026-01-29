@@ -28,3 +28,11 @@ std::string join(const std::vector<std::string> &v,
  * @param s The string to be converted
  */
 std::string upper(const std::string &s);
+
+/**
+ * @brief Finds the root directory of the current ZC project by searching
+ * upwards.
+ * @return The path to the project root.
+ * @throws ZCError if no .zc directory is found in the hierarchy.
+ */
+std::filesystem::path getProjectRoot();

@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
   //  ========================= PROJECT
   string language;
   string project_name;
+  bool git;
 
   //  ========================= BUILD
   bool release_mode = false;
@@ -111,8 +112,9 @@ int main(int argc, char *argv[])
 
   project->add_flag("--force,-f", force, "Force initializing project even if it already exists");
   project->add_flag("--edit,-e", edit, "Edit the project once it is initialized");
+  project->add_flag("--git,-g", git, "Add a git repository for the new project");
 
-  project->callback([&]() { command = make_unique<Project>(language, project_name, force, edit); });
+  project->callback([&]() { command = make_unique<Project>(language, project_name, force, edit, git); });
 
 
   /*
@@ -123,6 +125,7 @@ int main(int argc, char *argv[])
   build->add_flag("--release,-r", release_mode, "Compile as release mode");
 
   build->callback([&]() { command = make_unique<Build>(force, release_mode); });
+
 
   /*
    * ========================== LIB ===============================

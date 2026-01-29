@@ -84,6 +84,11 @@ public:
   std::vector<Package> getPackages() const;
 
   /**
+   * @brief Get all the packages of the registry
+   */
+  std::vector<StdPackage> getStdPackages() const;
+
+  /**
    * @brief Get the include path
    */
   std::filesystem::path getIncludeDir() const;
@@ -160,7 +165,6 @@ private:
 
   std::vector<Package> packages_;
   std::vector<StdPackage> std_packages_;
-  // TODO : add std package detection when compiling
 
   std::filesystem::path registry_path_ = getZCRootDir() / REGISTRY;
 
