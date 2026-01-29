@@ -9,15 +9,11 @@ using json = nlohmann::json;
 using namespace std;
 namespace fs = std::filesystem;
 
+Settings::Settings() { load(); }
+
 Settings &Settings::getInstance()
 {
   static Settings instance;
-  static bool initialized = false;
-  if (!initialized)
-  {
-    instance.load();
-    initialized = true;
-  }
   return instance;
 }
 

@@ -13,15 +13,11 @@ using namespace std;
 namespace fs = std::filesystem;
 using json = nlohmann::json;
 
+Registry::Registry() { load(); }
+
 Registry &Registry::getInstance()
 {
   static Registry instance;
-  static bool initialized = false;
-  if (!initialized)
-  {
-    instance.load();
-    initialized = true;
-  }
   return instance;
 }
 

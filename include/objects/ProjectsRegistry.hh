@@ -29,7 +29,7 @@ public:
   bool projectExists(const std::string &target);
 
 private:
-  ProjectsRegistry() = default;
+  ProjectsRegistry();
 
   void load();
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdlib>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -46,7 +45,7 @@ private:
   /**
    * @brief Default constructor
    */
-  Settings() = default;
+  Settings();
 
   std::filesystem::path config_path_ = getZCRootDir() / CONFIG;
 

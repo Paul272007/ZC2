@@ -11,15 +11,11 @@ using namespace std;
 using json = nlohmann::json;
 namespace fs = std::filesystem;
 
+ProjectsRegistry::ProjectsRegistry() { load(); }
+
 ProjectsRegistry &ProjectsRegistry::getInstance()
 {
   static ProjectsRegistry instance;
-  static bool initialized = false;
-  if (!initialized)
-  {
-    instance.load();
-    initialized = true;
-  }
   return instance;
 };
 

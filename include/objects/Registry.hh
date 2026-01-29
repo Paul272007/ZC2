@@ -1,6 +1,5 @@
 #pragma once
 
-#include <cstdlib>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -117,7 +116,7 @@ private:
   /**
    * @brief Default constructor
    */
-  Registry() = default;
+  Registry();
 
   /**
    * @brief Index the Package in the configuration file
