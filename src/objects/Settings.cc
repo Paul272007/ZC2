@@ -1,4 +1,3 @@
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
 
@@ -30,7 +29,6 @@ void Settings::load()
     throw ZCError(ZC_CONFIG_NOT_FOUND,
                   "The configuration file was not found: " +
                       config_path_.string());
-    return;
   }
   ifstream input(config_path_);
   if (!input.is_open())
@@ -63,3 +61,14 @@ void Settings::load()
   auto_keep_ = json_conf.value<bool>("auto_keep", false);
   edit_on_init_ = json_conf.value<bool>("edit_on_init", false);
 }
+
+const fs::path &Settings::getConfigPath() const { return config_path_; }
+const std::string &Settings::getCCompiler() const { return c_compiler_; }
+const std::string &Settings::getCppCompiler() const { return cpp_compiler_; }
+const std::string &Settings::getCStd() const { return c_std_; }
+const std::string &Settings::getCppStd() const { return cpp_std_; }
+const std::vector<std::string> &Settings::getFlags() const { return flags_; }
+const std::string &Settings::getEditor() const { return editor_; }
+bool Settings::getClearBeforeRun() const { return clear_before_run_; }
+bool Settings::getAutoKeep() const { return auto_keep_; }
+bool Settings::getEditOnInit() const { return edit_on_init_; }

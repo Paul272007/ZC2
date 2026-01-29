@@ -76,9 +76,9 @@ int Project::execute()
   ProjectData p{project_name_, project_path_};
   pregistry_.saveProject(p);
 
-  if (settings_.edit_on_init_ || edit_)
+  if (settings_.getEditOnInit() || edit_)
     return system(
-        string(settings_.editor_ + " " + project_path_.string()).c_str());
+        string(settings_.getEditor() + " " + project_path_.string()).c_str());
 
   return 0;
 }

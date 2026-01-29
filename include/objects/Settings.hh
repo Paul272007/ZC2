@@ -30,6 +30,24 @@ public:
    */
   void write();
 
+  /* Getters */
+  const std::filesystem::path &getConfigPath() const;
+  const std::string &getCCompiler() const;
+  const std::string &getCppCompiler() const;
+  const std::string &getCStd() const;
+  const std::string &getCppStd() const;
+  const std::vector<std::string> &getFlags() const;
+  const std::string &getEditor() const;
+  bool getClearBeforeRun() const;
+  bool getAutoKeep() const;
+  bool getEditOnInit() const;
+
+private:
+  /**
+   * @brief Default constructor
+   */
+  Settings() = default;
+
   std::filesystem::path config_path_ = getZCRootDir() / CONFIG;
 
   /* Compiling settings */
@@ -44,10 +62,4 @@ public:
   bool clear_before_run_ = false;
   bool auto_keep_ = false;
   bool edit_on_init_ = false;
-
-private:
-  /**
-   * @brief Default constructor
-   */
-  Settings() = default;
 };

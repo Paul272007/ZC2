@@ -95,8 +95,10 @@ bool Build::generateCMakeLists(const vector<File> &sources,
   cmake << "project(" << project_name << " C CXX)\n\n";
 
   // Standards
-  cmake << "set(CMAKE_CXX_STANDARD " << (settings_.cpp_std_.substr(3)) << ")\n";
-  cmake << "set(CMAKE_C_STANDARD " << (settings_.c_std_.substr(1)) << ")\n\n";
+  cmake << "set(CMAKE_CXX_STANDARD " << (settings_.getCppStd().substr(3))
+        << ")\n";
+  cmake << "set(CMAKE_C_STANDARD " << (settings_.getCStd().substr(1))
+        << ")\n\n";
 
   // --- ZC Integration ---
   cmake << "# ZC Paths\n";

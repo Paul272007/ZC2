@@ -73,10 +73,10 @@ int Init::execute()
       throw ZCError(ZC_UNSUPPORTED_LANGUAGE,
                     "No template is available for the file: " + f.getPath_());
   }
-  if (settings_.edit_on_init_ || edit_)
+  if (settings_.getEditOnInit() || edit_)
   {
     stringstream cmd;
-    cmd << settings_.editor_;
+    cmd << settings_.getEditor();
     for (const auto &f : files_)
       cmd << " " << f;
     return system(cmd.str().c_str());

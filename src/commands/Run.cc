@@ -92,7 +92,7 @@ int Run::execute()
   }
 
   // 4. Execute program
-  if (settings_.clear_before_run_)
+  if (settings_.getClearBeforeRun())
   {
     int clear_res = system("clear");
     if (clear_res != 0)
@@ -107,7 +107,7 @@ int Run::execute()
 
   int run_res = system(exec_cmd.c_str());
 
-  if (!settings_.auto_keep_ && !keep_ && fs::exists(output_name))
+  if (!settings_.getAutoKeep() && !keep_ && fs::exists(output_name))
   {
     fs::remove(output_name);
 
@@ -177,12 +177,14 @@ string Run::buildCommand(const string &output_name) const
   stringstream cmd;
   // Compiler and standard
   if (plus_)
-    cmd << settings_.cpp_compiler_ << " '-std=" << settings_.cpp_std_ << "' ";
+    cmd << settings_.getCppCompiler() << " '-std=" << settings_.getCppStd()
+        << "' ";
   else
-    cmd << settings_.c_compiler_ << " '-std=" << settings_.c_std_ << "' ";
+    cmd << settings_.getCCompiler() << " '-std=" << settings_.getCStd()
+        << "' ";
 
   // User flags
-  for (const auto &f : settings_.flags_)
+  for (const auto &f : settings_.getFlags())
     cmd << escape_shell_arg(f) << " ";
 
   cmd << "-I" << escape_shell_arg(registry_.getIncludeDir()) << " ";

@@ -44,10 +44,23 @@ message(STATUS "Found libclang: ${CLANG_LIB}")
 
 # --- Build ---
 
-# Source files
-file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS "src/*.cc")
-
-add_executable(zc ${SOURCES})
+add_executable(zc
+  src/commands/Lib/Create.cc
+  src/commands/Lib/List.cc
+  src/commands/Lib/Remove.cc
+  src/commands/Build.cc
+  src/commands/Init.cc
+  src/commands/Project.cc
+  src/commands/Run.cc
+  src/objects/File.cc
+  src/objects/ProjectsRegistry.cc
+  src/objects/Registry.cc
+  src/objects/Settings.cc
+  src/objects/ZCError.cc
+  src/helpers.cc
+  src/main.cc
+  src/zcio.cc
+)
 
 # Include directories for your project
 target_include_directories(zc PRIVATE include)
