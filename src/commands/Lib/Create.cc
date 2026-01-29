@@ -39,6 +39,7 @@ int Create::execute()
     case H:
     case HPP:
       headers.push_back(f);
+      break;
     case OBJECT:
       objects.push_back(f);
       break;

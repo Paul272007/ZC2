@@ -77,6 +77,8 @@ public:
    */
   bool removePackage(const std::string &pkg_name);
 
+  bool pkgExists(const std::string &pkg_name) const;
+
   /**
    * @brief Get all the packages of the registry
    */

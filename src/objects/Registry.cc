@@ -1,4 +1,4 @@
-#include <cstdlib>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <sstream>
@@ -97,12 +97,11 @@ void Registry::savePackage(Package &package, bool force,
   // 1. Create package subdirectory for headers and check if it already exists
   // (which means the library already exists)
   fs::path package_dir = include_path_ / package.name_;
-  if (!force && fs::exists(package_dir))
+  if (!force && (pkgExists(package.name_) || fs::exists(package_dir)))
     if (!ask("The library " + (package.name_) +
              " already exists. Do you want to replace it ?"))
     {
       throw ZCError(ZC_OPERATIONS_ABORTED, "Operations aborted.");
-      return;
     }
   fs::create_directories(package_dir);
 
@@ -214,7 +213,7 @@ void Registry::compileObjects(const std::vector<std::filesystem::path> &sources,
   {
     fs::path obj = s;
     stringstream cmd;
-    cmd << (is_cpp ? "g++" : "gcc") << " -c -fPIC " << s.string() << "-o "
+    cmd << (is_cpp ? "g++" : "gcc") << " -c -fPIC " << s.string() << " -o "
         << obj.replace_extension(".o").string();
     if (system(cmd.str().c_str()) != 0)
       throw ZCError(ZC_COMPILATION_ERROR, "An error occured while compiling " +
@@ -229,9 +228,10 @@ bool Registry::createStaticLib(
     const std::vector<std::filesystem::path> &objects) const
 {
   stringstream cmd;
-  cmd << "ar rcs" << libPath;
+  cmd << "ar rcs " << libPath;
   for (const auto &o : objects)
     cmd << " " << o;
+  debug("Build command for static library: " + cmd.str());
   return (system(cmd.str().c_str()) == 0);
 }
 
@@ -246,9 +246,11 @@ bool Registry::createSharedLib(const std::string &libPath,
 #else
   cmd << " -shared ";
 #endif
-  cmd << libPath;
   for (const auto &o : objects)
-    cmd << o.string();
+    cmd << o << " ";
+
+  cmd << "-o " << libPath;
+  debug("Build command for shared library: " + cmd.str());
   return system(cmd.str().c_str()) == 0;
 }
 
@@ -304,4 +306,11 @@ bool Registry::removePackage(const std::string &pkg_name)
       return false;
   }
   return true;
+}
+
+bool Registry::pkgExists(const std::string &pkg_name) const
+{
+  auto it = find_if(packages_.begin(), packages_.end(),
+                    [&](const Package &p) { return p.name_ == pkg_name; });
+  return it != packages_.end();
 }
