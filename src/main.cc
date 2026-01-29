@@ -5,6 +5,7 @@
 
 #include <CLI11.hpp>
 
+#include <commands/Build.hh>
 #include <commands/Command.hh>
 #include <commands/Init.hh>
 #include <commands/Lib/Create.hh>
@@ -58,6 +59,9 @@ int main(int argc, char *argv[])
   string language;
   string project_name;
 
+  //  ========================= BUILD
+  bool release_mode = false;
+
   /* ========================================================= *
    *                         SUBCOMMANDS                       *
    * ========================================================= */
@@ -67,6 +71,7 @@ int main(int argc, char *argv[])
   auto lib     = app.add_subcommand("lib", "Operations on libraries");
   auto init    = app.add_subcommand("init", "Initialize file(s) with a template");
   auto project = app.add_subcommand("project", "Initiliaze a new C/C++ project");
+  auto build   = app.add_subcommand("build", "Build ZC project using Cmake");
 
   /*
    * ========================== RUN ===============================
@@ -109,6 +114,15 @@ int main(int argc, char *argv[])
 
   project->callback([&]() { command = make_unique<Project>(language, project_name, force, edit); });
 
+
+  /*
+   * ========================== BUILD ===============================
+   */
+
+  build->add_flag("--force,-f", force, "Force regenerating CMakeLists.txt");
+  build->add_flag("--release,-r", release_mode, "Compile as release mode");
+
+  build->callback([&]() { command = make_unique<Build>(force, release_mode); });
 
   /*
    * ========================== LIB ===============================

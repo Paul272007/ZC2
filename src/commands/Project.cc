@@ -2,6 +2,7 @@
 #include <vector>
 
 #include <commands/Project.hh>
+#include <objects/ProjectsRegistry.hh>
 #include <objects/Settings.hh>
 #include <objects/ZCError.hh>
 #include <zcio.hh>
@@ -12,7 +13,8 @@ namespace fs = std::filesystem;
 Project::Project(const string &language, const string &project_name, bool force,
                  bool edit)
     : language_(language), project_name_(project_name), force_(force),
-      edit_(edit), settings_(Settings::getInstance())
+      edit_(edit), settings_(Settings::getInstance()),
+      pregistry_(ProjectsRegistry::getInstance())
 {
 }
 
@@ -56,6 +58,9 @@ int Project::execute()
   if (!found)
     throw ZCError(ZC_UNSUPPORTED_LANGUAGE,
                   "No template is available for the language: " + language_);
+
+  ProjectData p{project_name_, fs::path(project_name_)};
+  pregistry_.saveProject(p);
 
   if (settings_.edit_on_init_ || edit_)
   {

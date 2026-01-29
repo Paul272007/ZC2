@@ -31,7 +31,10 @@ enum ErrorCode
   // Internal errors
   ZC_INTERNAL_ERROR = 60,
   // Package errors
-  ZC_PACKAGE_NOT_FOUND = 70
+  ZC_PACKAGE_NOT_FOUND = 70,
+  // Build errors
+  ZC_NO_SOURCE_FILES = 80,
+  ZC_CMAKE_ERROR = 81
 };
 
 class ZCError : public std::exception

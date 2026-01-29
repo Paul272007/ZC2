@@ -160,7 +160,6 @@ private:
 
   std::vector<Package> packages_;
   std::vector<StdPackage> std_packages_;
-  // TODO : add std packages to lib list
   // TODO : add std package detection when compiling
 
   std::filesystem::path registry_path_ = getZCRootDir() / REGISTRY;

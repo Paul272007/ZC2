@@ -65,7 +65,7 @@ void to_json(json &j, const Package &p)
 
 void Registry::load()
 {
-  json json_conf;
+  json json_registry;
   if (!fs::exists(registry_path_))
   {
     throw ZCError(ZC_CONFIG_NOT_FOUND,
@@ -80,7 +80,7 @@ void Registry::load()
                       registry_path_.string());
   try
   {
-    input >> json_conf;
+    input >> json_registry;
   }
   catch (const json::parse_error &e)
   {
@@ -88,10 +88,10 @@ void Registry::load()
                   "The configuration file couldn't be parsed: " +
                       registry_path_.string() + ": " + e.what());
   }
-  if (json_conf.contains("libraries"))
-    packages_ = json_conf.at("libraries").get<vector<Package>>();
-  if (json_conf.contains("std_libraries"))
-    std_packages_ = json_conf.at("std_libraries").get<vector<StdPackage>>();
+  if (json_registry.contains("libraries"))
+    packages_ = json_registry.at("libraries").get<vector<Package>>();
+  if (json_registry.contains("std_libraries"))
+    std_packages_ = json_registry.at("std_libraries").get<vector<StdPackage>>();
 }
 
 void Registry::savePackage(Package &package, bool force,

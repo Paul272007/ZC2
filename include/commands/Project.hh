@@ -5,6 +5,7 @@
 
 #include <commands/Command.hh>
 #include <helpers.hh>
+#include <objects/ProjectsRegistry.hh>
 #include <objects/Settings.hh>
 #include <vector>
 
@@ -43,6 +44,7 @@ private:
   const bool force_;
   const bool edit_;
   Settings &settings_;
+  ProjectsRegistry &pregistry_;
   std::filesystem::path project_templates_path_ =
       getZCRootDir() / PROJECT_TEMPLATES;
 };
